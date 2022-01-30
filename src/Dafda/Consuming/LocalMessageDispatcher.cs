@@ -39,9 +39,6 @@ namespace Dafda.Consuming
                 throw new UnableToResolveUnitOfWorkForHandlerException($"Error! Unable to create unit of work for handler type \"{registration.HandlerInstanceType.FullName}\".");
             }
 
-            var messageInstance = message.ReadDataAs(registration.MessageInstanceType);
-            var context = new MessageHandlerContext(message.Metadata);
-
             await unitOfWork.Run(async handler =>
             {
                 if (handler == null)
@@ -51,6 +48,9 @@ namespace Dafda.Consuming
                 
                 // TODO -- verify that the handler is in fact an implementation of IMessageHandler<registration.MessageInstanceType> to provider sane error messages.
                 
+                var messageInstance = message.ReadDataAs(registration.MessageInstanceType);
+                var context = new MessageHandlerContext(message.Metadata);
+
                 await ExecuteHandler((dynamic) messageInstance, (dynamic) handler, context);
             });
         }
