@@ -33,7 +33,7 @@ namespace Dafda.Middleware
             }
             
             var next = current.Next;
-            await current.Value.Invoke(context, () => InnerExecute(context, next));
+            await current.Value.Invoke(context, _ => InnerExecute(context, next));
         }
 
         /// <summary>
@@ -60,7 +60,10 @@ namespace Dafda.Middleware
             private readonly Func<TContext, Task> _action;
 
             public EndOfLine(Func<TContext, Task> action) => _action = action;
-            public async Task Invoke(TContext context, MiddlewareDelegate next) => await _action(context);
+            public Task Invoke(TContext context, Func<TContext, Task> next)
+            {
+                return _action(context);
+            }
         }
     }
 }

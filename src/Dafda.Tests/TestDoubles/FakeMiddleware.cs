@@ -14,11 +14,11 @@ namespace Dafda.Tests.TestDoubles
             _pre = pre ?? ((_) => {});
             _post = post ?? ((_) => {});
         }
-            
-        public async Task Invoke(TContext context, MiddlewareDelegate next)
+
+        public async Task Invoke(TContext context, Func<TContext, Task> next)
         {
             _pre(context);
-            await next();
+            await next(context);
             _post(context);
         }
             

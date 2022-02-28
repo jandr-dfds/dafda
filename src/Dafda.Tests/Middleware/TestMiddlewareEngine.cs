@@ -1,4 +1,5 @@
 #nullable enable
+using System;
 using System.Threading.Tasks;
 using Dafda.Middleware;
 using Dafda.Tests.Builders;
@@ -99,8 +100,10 @@ namespace Dafda.Tests.Middleware
 
         private class ShortCircuitMiddleware : IMiddleware<SpyContext>
         {
-            public Task Invoke(SpyContext context, MiddlewareDelegate next) 
-                => Task.CompletedTask;
+            public Task Invoke(SpyContext context, Func<SpyContext, Task> next)
+            {
+                return Task.CompletedTask;
+            }
         }
 
         private class SpyContext
