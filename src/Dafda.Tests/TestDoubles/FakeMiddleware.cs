@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Dafda.Middleware;
 
+#nullable enable
 namespace Dafda.Tests.TestDoubles
 {
     public class FakeMiddleware<TContext> : IMiddleware<TContext>
@@ -30,5 +31,26 @@ namespace Dafda.Tests.TestDoubles
 
         public static FakeMiddleware<TContext> WithPreAndPostActions(Action<TContext> preAction, Action<TContext> postAction) 
             => new FakeMiddleware<TContext>(pre: preAction, post: postAction);
+    }
+
+    public class FakeMiddleware<TInContext, TOutContext> : IMiddleware<TInContext, TOutContext>
+    {
+        private readonly Func<TInContext, TOutContext> _transformContext;
+        private readonly Action<TInContext> _pre;
+        private readonly Action<TInContext> _post;
+
+        public FakeMiddleware(Func<TInContext, TOutContext> transformContext, Action<TInContext>? pre = null, Action<TInContext>? post = null)
+        {
+            _transformContext = transformContext;
+            _pre = pre ?? (_ => { });
+            _post = post ?? (_ => { });
+        }
+
+        public async Task Invoke(TInContext context, Func<TOutContext, Task> next)
+        {
+            _pre(context);
+            await next(_transformContext(context));
+            _post(context);
+        }
     }
 }
