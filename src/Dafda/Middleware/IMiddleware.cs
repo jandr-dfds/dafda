@@ -29,14 +29,4 @@ namespace Dafda.Middleware
         /// <param name="next">The next middleware in the pipeline.</param>
         Task Invoke(TInContext context, Func<TOutContext, Task> next);
     }
-
-    /// <summary>
-    /// This interface can be used to implement middleware that can be used in both incoming
-    /// as well as outgoing pipelines, where the input and output contexts are the same. 
-    /// </summary>
-    /// <typeparam name="TContext">The context.</typeparam>
-    /// <seealso cref="IMiddleware{TInContext,TOutContext}"/>
-    public interface IMiddleware<TContext> : IMiddleware<TContext, TContext>
-    {
-    }
 }
