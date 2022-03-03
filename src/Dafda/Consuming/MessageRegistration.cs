@@ -15,13 +15,14 @@ namespace Dafda.Consuming
             Type handlerInstanceType,
             Type messageInstanceType,
             string topic,
-            string messageType)
+            string messageType, 
+            MessageHandlerDelegate messageHandler)
         {
             EnsureProperHandlerType(handlerInstanceType, messageInstanceType);
 
-            HandlerInstanceType = handlerInstanceType;
             MessageInstanceType = messageInstanceType;
             MessageType = messageType;
+            MessageHandler = messageHandler;
             Topic = EnsureValidTopicName(topic);
         }
 
@@ -51,12 +52,14 @@ namespace Dafda.Consuming
         }
 
         /// <summary>The type of the message handler</summary>
-        public Type HandlerInstanceType { get; }
+        public Type HandlerInstanceType => MessageHandler.HandlerType;
         /// <summary>The type of the message</summary>
         public Type MessageInstanceType { get; }
         /// <summary>The name of the kafka topic</summary>
         public string Topic { get; }
         /// <summary>The name of the message type as sent over kafka</summary>
         public string MessageType { get; }
+        /// <summary>The delegate to call the message handler</summary>
+        public MessageHandlerDelegate MessageHandler { get; }
     }
 }

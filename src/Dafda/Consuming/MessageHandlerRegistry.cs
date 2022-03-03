@@ -21,11 +21,13 @@ namespace Dafda.Consuming
 
         public MessageRegistration Register(Type handlerInstanceType, Type messageInstanceType, string topic, string messageType)
         {
+            var messageHandler = MessageHandlerDelegate.Create(messageInstanceType, handlerInstanceType);
             var registration = new MessageRegistration(
                 handlerInstanceType: handlerInstanceType,
                 messageInstanceType: messageInstanceType,
                 topic: topic,
-                messageType: messageType
+                messageType: messageType,
+                messageHandler: messageHandler
             );
 
             Register(registration);
@@ -45,6 +47,11 @@ namespace Dafda.Consuming
         public MessageRegistration GetRegistrationFor(string messageType)
         {
             return _registrations.SingleOrDefault(x => x.MessageType == messageType);
+        }
+
+        public MessageRegistration GetMessageHandlerFor(Type messageType)
+        {
+            return _registrations.SingleOrDefault(x => x.MessageInstanceType==messageType);
         }
     }
 }

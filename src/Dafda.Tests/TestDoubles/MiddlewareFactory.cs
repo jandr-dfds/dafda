@@ -46,4 +46,36 @@ internal static class MiddlewareFactory
     {
         public Task Invoke(TInContext context, Func<TOutContext, Task> next) => Task.CompletedTask;
     }
+
+    public static IMiddleware<TInContext, TOutContext> CreateStub<TInContext, TOutContext>(Func<TInContext, TOutContext> next = null)
+    {
+        return new MiddlewareStub<TInContext, TOutContext>(next);
+    }
+
+    private class MiddlewareStub<TInContext, TOutContext> : IMiddleware<TInContext, TOutContext>
+    {
+        private readonly Func<TInContext, TOutContext> _next;
+
+        public MiddlewareStub(Func<TInContext, TOutContext> next = null)
+        {
+            _next = next;
+        }
+
+        public Task Invoke(TInContext context, Func<TOutContext, Task> next)
+        {
+            return next(_next(context));
+        }
+    }
+
+    public static IMiddleware CreateInvalid()
+    {
+        return new MiddlewareWithoutImplementation();
+    }
+
+    /// <summary>
+    /// Middleware without implementation. <see cref="IMiddleware"/> is only a marker interface.
+    /// </summary>
+    private class MiddlewareWithoutImplementation : IMiddleware
+    {
+    }
 }

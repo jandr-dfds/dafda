@@ -10,6 +10,7 @@ namespace Dafda.Tests.Builders
         private string _messageType;
         private Type _handlerInstanceType;
         private Type _messageInstanceType;
+        private MessageHandlerDelegate _messageHandler;
 
         public MessageRegistrationBuilder()
         {
@@ -17,6 +18,7 @@ namespace Dafda.Tests.Builders
             _messageType = "dummy message type";
             _handlerInstanceType = typeof(FooHandler);
             _messageInstanceType = typeof(FooMessage);
+            _messageHandler = MessageHandlerDelegate.Create<FooMessage, FooHandler>();
         }
 
         public MessageRegistrationBuilder WithTopic(string topic)
@@ -43,14 +45,21 @@ namespace Dafda.Tests.Builders
             return this;
         }
 
+
+        public MessageRegistrationBuilder WithMessageHandler(MessageHandlerDelegate messageHandler)
+        {
+            _messageHandler = messageHandler;
+            return this;
+        }
+        
         public MessageRegistration Build()
         {
             return new MessageRegistration(
+                handlerInstanceType: _handlerInstanceType,
+                messageInstanceType: _messageInstanceType,
                 topic: _topic,
                 messageType: _messageType,
-                handlerInstanceType: _handlerInstanceType,
-                messageInstanceType: _messageInstanceType
-            );
+                messageHandler: _messageHandler);
         }
 
         #region private helper classes

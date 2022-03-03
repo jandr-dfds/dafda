@@ -17,6 +17,7 @@ namespace Dafda.Tests.Consuming
             var sut = new MessageRegistrationBuilder()
                 .WithHandlerInstanceType(expectedHandlerInstanceType)
                 .WithMessageInstanceType(messageInstanceTypeStub)
+                .WithMessageHandler(MessageHandlerDelegate.Create<FooMessage, FooHandler>())
                 .Build();
 
             Assert.Equal(expectedHandlerInstanceType, sut.HandlerInstanceType);

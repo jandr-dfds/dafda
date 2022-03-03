@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Dafda.Middleware;
+using Dafda.Tests.TestDoubles;
 using Xunit;
 
 namespace Dafda.Tests.Middleware;
@@ -10,7 +11,7 @@ public class TestMiddlewareDescription
     [Fact]
     public void can_describe_middleware()
     {
-        var middleware = new Middleware<int, string>();
+        var middleware = MiddlewareFactory.CreateStub<int, string>();
 
         var description = MiddlewareDescription.Describe(middleware);
 
@@ -24,7 +25,7 @@ public class TestMiddlewareDescription
     public async Task has_correct_method_info()
     {
         string recordedValue = null;
-        var middleware = new Middleware<int, string>(ctx =>  ctx.ToString());
+        var middleware = MiddlewareFactory.CreateStub<int, string>(ctx =>  ctx.ToString());
         var description = MiddlewareDescription.Describe(middleware);
 
         await ((Task)description.InvokeMethod.Invoke(middleware, new object[] { 1, Spy }))!;
@@ -41,7 +42,7 @@ public class TestMiddlewareDescription
     [Fact]
     public void can_handle_missing_implementation()
     {
-        var middleware = new MiddlewareWithoutImplementation();
+        var middleware = MiddlewareFactory.CreateInvalid();
 
         Assert.Throws<InvalidOperationException>(() => MiddlewareDescription.Describe(middleware));
     }
@@ -50,24 +51,5 @@ public class TestMiddlewareDescription
     public void can_handle_null_middleware()
     {
         Assert.Throws<ArgumentNullException>(() => MiddlewareDescription.Describe(null));
-    }
-
-    private class Middleware<TInContext, TOutContext> : IMiddleware<TInContext, TOutContext>
-    {
-        private readonly Func<TInContext, TOutContext> _next;
-
-        public Middleware(Func<TInContext, TOutContext> next = null)
-        {
-            _next = next;
-        }
-
-        public Task Invoke(TInContext context, Func<TOutContext, Task> next)
-        {
-            return next(_next(context));
-        }
-    }
-
-    private class MiddlewareWithoutImplementation : IMiddleware
-    {
     }
 }

@@ -42,7 +42,8 @@ namespace Dafda.Consuming
                 typeof(NoOpHandler),
                 typeof(object),
                 "",
-                messageType);
+                messageType,
+                MessageHandlerDelegate.Create<object, NoOpHandler>());
 
     }
 }
