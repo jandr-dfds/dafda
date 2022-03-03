@@ -1,6 +1,6 @@
 using System;
-using System.Threading.Tasks;
 using Dafda.Middleware;
+using Dafda.Tests.TestDoubles;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -12,9 +12,9 @@ public class TestMiddlewareBuilder
     public void can_register_middleware()
     {
         var services = new ServiceCollection();
-        var aa = new Middleware<IContextA, IContextA>();
-        var ab = new Middleware<IContextA, IContextB>();
-        var ba = new Middleware<IContextB, IContextA>();
+        var aa = MiddlewareFactory.CreateDummy<IContextA, IContextA>();
+        var ab = MiddlewareFactory.CreateDummy<IContextA, IContextB>();
+        var ba = MiddlewareFactory.CreateDummy<IContextB, IContextA>();
 
         var middlewares = new MiddlewareBuilder<IContextA>(services)
             .Register(_ => aa)
@@ -36,9 +36,9 @@ public class TestMiddlewareBuilder
     public void can_register_all_middleware()
     {
         var services = new ServiceCollection();
-        var middleware1 = new Middleware<IContextA, IContextA>();
-        var middleware2 = new Middleware<IContextA, IContextA>();
-        var middleware3 = new Middleware<IContextA, IContextA>();
+        var middleware1 = MiddlewareFactory.CreateDummy<IContextA, IContextA>();
+        var middleware2 = MiddlewareFactory.CreateDummy<IContextA, IContextA>();
+        var middleware3 = MiddlewareFactory.CreateDummy<IContextA, IContextA>();
 
         var middlewares = new MiddlewareBuilder<IContextA>(services)
             .RegisterAll(new Func<IServiceProvider, IMiddleware<IContextA, IContextA>>[]
@@ -63,10 +63,5 @@ public class TestMiddlewareBuilder
 
     private interface IContextB
     {
-    }
-
-    private class Middleware<TInContext, TOutContext> : IMiddleware<TInContext, TOutContext>
-    {
-        public Task Invoke(TInContext context, Func<TOutContext, Task> next) => Task.CompletedTask;
     }
 }
