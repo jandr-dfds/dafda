@@ -150,53 +150,7 @@ namespace Dafda.Tests.Configuration
             Assert.Equal(2, createCount);
             Assert.Equal(2, disposeCount);
         }
-
-        [Fact]
-        public async Task Has_expected_number_of_creations_and_disposals_when_scoped_2()
-        {
-            var dummyMessage = new DummyMessage();
-            var messageStub = new TransportLevelMessageBuilder()
-                .WithType(nameof(DummyMessage))
-                .WithData(dummyMessage)
-                .Build();
-            var messageResult = new MessageResultBuilder()
-                .WithTransportLevelMessage(messageStub)
-                .Build();
-
-            var services = new ServiceCollection();
-            services.AddTransient<Repository>();
-            services.AddSingleton<IHostApplicationLifetime, DummyApplicationLifetime>();
-            services.AddTransient<DummyMessageHandler>();
-            services.AddLogging();
-
-            var createCount = 0;
-            var disposeCount = 0;
-
-            services.AddScoped<ScopeSpy>(provider => new ScopeSpy(onCreate: () => createCount++, onDispose: () => disposeCount++));
-
-            var serviceProvider = services.BuildServiceProvider();
-
-            var consumerConfiguration = new ConsumerConfigurationBuilder()
-                .WithGroupId("dummy")
-                .WithBootstrapServers("dummy")
-                .RegisterMessageHandler<DummyMessage, DummyMessageHandler>("dummyTopic", nameof(DummyMessage))
-                .WithUnitOfWorkFactory(new ServiceProviderUnitOfWorkFactory(serviceProvider))
-                .Build();
-
-            var consumer = new ConsumerBuilder()
-                .WithMessageHandlerRegistry(consumerConfiguration.MessageHandlerRegistry)
-                .WithUnitOfWorkFactory(consumerConfiguration.UnitOfWorkFactory)
-                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(new ConsumerScopeStub(messageResult)))
-                .WithEnableAutoCommit(consumerConfiguration.EnableAutoCommit)
-                .Build();
-
-            await consumer.ConsumeSingle(CancellationToken.None);
-            await consumer.ConsumeSingle(CancellationToken.None);
-
-            Assert.Equal(2, createCount);
-            Assert.Equal(2, disposeCount);
-        }
-
+        
         public class DummyMessage
         {
         }
