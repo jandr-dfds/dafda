@@ -24,14 +24,25 @@ namespace Dafda.Consuming
             _consumerErrorHandler = consumerErrorHandler;
         }
 
-        public async Task ConsumeAll(CancellationToken stoppingToken)
+        public Task ConsumeAll(CancellationToken stoppingToken)
+        {
+            return _consumer.Consume(stoppingToken);
+        }
+
+        
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            await ConsumeLoop(stoppingToken);
+        }
+
+        public async Task ConsumeLoop(CancellationToken stoppingToken)
         {
             while (true)
             {
                 try
                 {
                     _logger.LogDebug("ConsumerHostedService [{GroupId}] started", _groupId);
-                    await _consumer.ConsumeAll(stoppingToken);
+                    await ConsumeAll(stoppingToken);
                     break;
                 }
                 catch (OperationCanceledException)
@@ -50,11 +61,6 @@ namespace Dafda.Consuming
                     }
                 }
             }
-        }
-
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            return Task.Run(async () => { await ConsumeAll(stoppingToken); }, stoppingToken);
         }
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Dafda.Configuration;
 using Dafda.Consuming;
@@ -45,15 +44,15 @@ namespace Dafda.Tests.Configuration
                 .WithUnitOfWorkFactory(new ServiceProviderUnitOfWorkFactory(serviceProvider))
                 .Build();
 
+            var consumerScope = new CancellingConsumerScope(messageResult, 2);
             var consumer = new ConsumerBuilder()
                 .WithMessageHandlerRegistry(consumerConfiguration.MessageHandlerRegistry)
                 .WithUnitOfWorkFactory(consumerConfiguration.UnitOfWorkFactory)
-                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(new ConsumerScopeStub(messageResult)))
+                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
                 .WithEnableAutoCommit(consumerConfiguration.EnableAutoCommit)
                 .Build();
 
-            await consumer.ConsumeSingle(CancellationToken.None);
-            await consumer.ConsumeSingle(CancellationToken.None);
+            await consumer.Consume(consumerScope.Token);
 
             Assert.Equal(4, createCount);
             Assert.Equal(4, disposeCount);
@@ -91,15 +90,15 @@ namespace Dafda.Tests.Configuration
                 .WithUnitOfWorkFactory(new ServiceProviderUnitOfWorkFactory(serviceProvider))
                 .Build();
 
+            var consumerScope = new CancellingConsumerScope(messageResult, 2);
             var consumer = new ConsumerBuilder()
                 .WithMessageHandlerRegistry(consumerConfiguration.MessageHandlerRegistry)
                 .WithUnitOfWorkFactory(consumerConfiguration.UnitOfWorkFactory)
-                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(new ConsumerScopeStub(messageResult)))
+                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
                 .WithEnableAutoCommit(consumerConfiguration.EnableAutoCommit)
                 .Build();
 
-            await consumer.ConsumeSingle(CancellationToken.None);
-            await consumer.ConsumeSingle(CancellationToken.None);
+            await consumer.Consume(consumerScope.Token);
 
             Assert.Equal(1, createCount);
             Assert.Equal(0, disposeCount);
@@ -137,20 +136,20 @@ namespace Dafda.Tests.Configuration
                 .WithUnitOfWorkFactory(new ServiceProviderUnitOfWorkFactory(serviceProvider))
                 .Build();
 
+            var consumerScope = new CancellingConsumerScope(messageResult, 2);
             var consumer = new ConsumerBuilder()
                 .WithMessageHandlerRegistry(consumerConfiguration.MessageHandlerRegistry)
                 .WithUnitOfWorkFactory(consumerConfiguration.UnitOfWorkFactory)
-                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(new ConsumerScopeStub(messageResult)))
+                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
                 .WithEnableAutoCommit(consumerConfiguration.EnableAutoCommit)
                 .Build();
 
-            await consumer.ConsumeSingle(CancellationToken.None);
-            await consumer.ConsumeSingle(CancellationToken.None);
+            await consumer.Consume(consumerScope.Token);
 
             Assert.Equal(2, createCount);
             Assert.Equal(2, disposeCount);
         }
-        
+
         public class DummyMessage
         {
         }

@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dafda.Configuration;
@@ -7,6 +8,7 @@ using Dafda.Tests.Builders;
 using Dafda.Tests.TestDoubles;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace Dafda.Tests.Configuration
@@ -14,44 +16,52 @@ namespace Dafda.Tests.Configuration
     public class TestConsumerServiceCollectionExtensions
     {
         [Fact( /*Skip = "is this relevant for testing these extensions"*/)]
-        public async Task Can_consume_message()
+        public async Task Can_consume_messages()
         {
             var dummyMessage = new DummyMessage();
-            var messageStub = new TransportLevelMessageBuilder()
+            var messageResult = new MessageResultBuilder()
+                .WithTransportLevelMessage(
+                    new TransportLevelMessageBuilder()
                 .WithType(nameof(DummyMessage))
                 .WithData(dummyMessage)
+                        .Build()
+                )
                 .Build();
-            var messageResult = new MessageResultBuilder()
-                .WithTransportLevelMessage(messageStub)
+            var loops = 0;
+            var consumerScope = new CancellingConsumerScope(messageResult, 2);
+            var subscriberScopeStub = new ConsumerScopeDecoratorWithHooks(
+                inner: consumerScope,
+                postHook: () =>
+                {
+                    loops++;
+                }
+            );
+
+            var messageHandlerRegistry = new MessageHandlerRegistry();
+            messageHandlerRegistry.Register<DummyMessage, DummyMessageHandler>("dummyTopic", nameof(DummyMessage));
+
+            var consumer = new ConsumerBuilder()
+                .WithMessageHandlerRegistry(messageHandlerRegistry)
+                .WithUnitOfWork(new UnitOfWorkStub(new DummyMessageHandler()))
+                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(subscriberScopeStub))
                 .Build();
 
-            var services = new ServiceCollection();
-            services.AddLogging();
-            services.AddSingleton<IHostApplicationLifetime, DummyApplicationLifetime>();
-            services.AddConsumer(options =>
-            {
-                options.WithBootstrapServers("dummyBootstrapServer");
-                options.WithGroupId("dummyGroupId");
-                options.RegisterMessageHandler<DummyMessage, DummyMessageHandler>("dummyTopic", nameof(DummyMessage));
+            using var consumerHostedService = new ConsumerHostedService(
+                NullLogger<ConsumerHostedService>.Instance,
+                new DummyApplicationLifetime(),
+                consumer,
+                "dummy.group.id",
+                ConsumerErrorHandler.Default
+            );
 
-                options.WithConsumerScopeFactory(_ =>new ConsumerScopeFactoryStub(new ConsumerScopeStub(messageResult)));
-            });
-            var serviceProvider = services.BuildServiceProvider();
+            await consumerHostedService.ConsumeAll(consumerScope.Token);
 
-            var consumerHostedService = serviceProvider.GetServices<IHostedService>()
-                .OfType<ConsumerHostedService>()
-                .First();
-
-            using (var cts = new CancellationTokenSource(50))
-            {
-                await consumerHostedService.ConsumeAll(cts.Token);
-            }
-
+            Assert.Equal(2, loops);
             Assert.Equal(dummyMessage, DummyMessageHandler.LastHandledMessage);
         }
 
         [Fact]
-        public void add_single_consumer_registeres_a_single_hosted_service()
+        public void add_single_consumer_registers_a_single_hosted_service()
         {
             var services = new ServiceCollection();
             services.AddLogging();
@@ -71,7 +81,7 @@ namespace Dafda.Tests.Configuration
         }
 
         [Fact]
-        public void add_multiple_consumers_registeres_multiple_hosted_services()
+        public void add_multiple_consumers_registers_multiple_hosted_services()
         {
             var services = new ServiceCollection();
 
@@ -139,7 +149,7 @@ namespace Dafda.Tests.Configuration
                 .OfType<ConsumerHostedService>()
                 .Single();
 
-            await consumerHostedService.ConsumeAll(CancellationToken.None);
+            await consumerHostedService.ConsumeLoop(CancellationToken.None);
 
             Assert.True(spy.StopApplicationWasCalled);
         }
@@ -175,7 +185,7 @@ namespace Dafda.Tests.Configuration
                 .OfType<ConsumerHostedService>()
                 .Single();
 
-            await consumerHostedService.ConsumeAll(CancellationToken.None);
+            await consumerHostedService.ConsumeLoop(CancellationToken.None);
 
             Assert.Equal(failuresBeforeQuitting + 1, count);
         }
@@ -196,6 +206,33 @@ namespace Dafda.Tests.Configuration
             public static object LastHandledMessage { get; private set; }
         }
 
+        private class ConsumerScopeDecoratorWithHooks : ConsumerScope
+        {
+            private readonly ConsumerScope _inner;
+            private readonly Action _preHook;
+            private readonly Action _postHook;
+
+            public ConsumerScopeDecoratorWithHooks(ConsumerScope inner, Action preHook = null, Action postHook = null)
+            {
+                _inner = inner;
+                _preHook = preHook;
+                _postHook = postHook;
+            }
+
+            public override async Task<MessageResult> GetNext(CancellationToken cancellationToken)
+            {
+                _preHook?.Invoke();
+                var result = await _inner.GetNext(cancellationToken);
+                _postHook?.Invoke();
+
+                return result;
+            }
+
+            public override void Dispose()
+            {
+                _inner.Dispose();
+            }
+        }
         private class FailingConsumerScopeFactory : IConsumerScopeFactory
         {
             public ConsumerScope CreateConsumerScope()

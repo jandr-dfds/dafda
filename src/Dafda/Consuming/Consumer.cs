@@ -32,7 +32,7 @@ namespace Dafda.Consuming
             _isAutoCommitEnabled = isAutoCommitEnabled;
         }
 
-        public async Task ConsumeAll(CancellationToken cancellationToken)
+        public async Task Consume(CancellationToken cancellationToken)
         {
             using (var consumerScope = _consumerScopeFactory.CreateConsumerScope())
             {
@@ -40,14 +40,6 @@ namespace Dafda.Consuming
                 {
                     await ProcessNextMessage(consumerScope, cancellationToken);
                 }
-            }
-        }
-
-        public async Task ConsumeSingle(CancellationToken cancellationToken)
-        {
-            using (var consumerScope = _consumerScopeFactory.CreateConsumerScope())
-            {
-                await ProcessNextMessage(consumerScope, cancellationToken);
             }
         }
 
