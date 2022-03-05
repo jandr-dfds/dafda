@@ -6,7 +6,7 @@ namespace Dafda.Tests.Builders
 {
     internal class MessageResultBuilder
     {
-        private TransportLevelMessage _message = new TransportLevelMessageBuilder().WithType("foo").Build();
+        private RawMessage _message = new RawMessageBuilder().Build();
         private Func<Task> _onCommit;
 
         public MessageResultBuilder()
@@ -14,7 +14,7 @@ namespace Dafda.Tests.Builders
             _onCommit = () => Task.CompletedTask;
         }
 
-        public MessageResultBuilder WithTransportLevelMessage(TransportLevelMessage message)
+        public MessageResultBuilder WithRawMessage(RawMessage message)
         {
             _message = message;
             return this;

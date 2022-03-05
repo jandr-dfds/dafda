@@ -35,23 +35,23 @@ namespace Dafda.Tests.Consuming
             Assert.IsType<TransportLevelPoisonMessage>(data);
         }
 
-        [Fact]
-        public void Can_register_poison_aware_inner_message_factory()
-        {
-            var options = new ConsumerOptions(new ServiceCollection());
-            options.WithGroupId("foo");
-            options.WithBootstrapServers("bar");
-            options.WithPoisonMessageHandling();
-            var configuration = options.Build();
-
-            var provider = new ServiceCollection()
-                .AddLogging()
-                .BuildServiceProvider();
-
-            var incomingMessageFactory = configuration.IncomingMessageFactory(provider);
-
-            Assert.IsType<PoisonAwareIncomingMessageFactory>(incomingMessageFactory);
-        }
+        // [Fact]
+        // public void Can_register_poison_aware_inner_message_factory()
+        // {
+        //     var options = new ConsumerOptions(new ServiceCollection());
+        //     options.WithGroupId("foo");
+        //     options.WithBootstrapServers("bar");
+        //     options.WithPoisonMessageHandling();
+        //     var configuration = options.Build();
+        //
+        //     var provider = new ServiceCollection()
+        //         .AddLogging()
+        //         .BuildServiceProvider();
+        //
+        //     var incomingMessageFactory = configuration.IncomingMessageFactory(provider);
+        //
+        //     Assert.IsType<PoisonAwareIncomingMessageFactory>(incomingMessageFactory);
+        // }
 
         private class IncomingMessageFactoryStub : IIncomingMessageFactory
         {

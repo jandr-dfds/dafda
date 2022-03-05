@@ -15,7 +15,7 @@ namespace Dafda.Consuming
         /// <summary>
         /// Resulting Message contaning Transport Level Message
         /// </summary>
-        public MessageResult(TransportLevelMessage message, Func<Task> onCommit = null)
+        public MessageResult(RawMessage message, Func<Task> onCommit = null)
         {
             Message = message;
             _onCommit = onCommit ?? EmptyCommitAction;
@@ -24,7 +24,7 @@ namespace Dafda.Consuming
         /// <summary>
         /// Transmitted message consumed from Kafka
         /// </summary>
-        public TransportLevelMessage Message { get; }
+        public RawMessage Message { get; }
 
         /// <summary>
         /// Commit message to handlers

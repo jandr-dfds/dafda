@@ -1,34 +1,31 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Dafda.Consuming.MessageFilters;
+using Dafda.Middleware;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Dafda.Consuming
 {
     internal class Consumer
     {
-        private readonly LocalMessageDispatcher _localMessageDispatcher;
+        private readonly ILogger<Consumer> _logger;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly IConsumerScopeFactory _consumerScopeFactory;
-        private readonly MessageFilter _messageFilter;
+        private readonly MiddlewareBuilder<IncomingRawMessageContext> _middlewareBuilder;
         private readonly bool _isAutoCommitEnabled;
 
         public Consumer(
-            MessageHandlerRegistry messageHandlerRegistry,
-            IHandlerUnitOfWorkFactory unitOfWorkFactory,
+            ILogger<Consumer> logger,
             IConsumerScopeFactory consumerScopeFactory,
-            IUnconfiguredMessageHandlingStrategy fallbackHandler,
-            MessageFilter messageFilter,
+            IServiceScopeFactory serviceScopeFactory, 
+            MiddlewareBuilder<IncomingRawMessageContext> middlewareBuilder,
             bool isAutoCommitEnabled = false)
         {
-            _localMessageDispatcher =
-                new LocalMessageDispatcher(
-                    messageHandlerRegistry,
-                    unitOfWorkFactory,
-                    fallbackHandler);
-            _consumerScopeFactory =
-                consumerScopeFactory
-                ?? throw new ArgumentNullException(nameof(consumerScopeFactory));
-            _messageFilter = messageFilter;
+            _logger = logger;
+            _consumerScopeFactory = consumerScopeFactory ?? throw new ArgumentNullException(nameof(consumerScopeFactory));
+            _serviceScopeFactory = serviceScopeFactory;
+            _middlewareBuilder = middlewareBuilder;
             _isAutoCommitEnabled = isAutoCommitEnabled;
         }
 
@@ -46,13 +43,28 @@ namespace Dafda.Consuming
         private async Task ProcessNextMessage(ConsumerScope consumerScope, CancellationToken cancellationToken)
         {
             var messageResult = await consumerScope.GetNext(cancellationToken);
+            _logger.LogDebug("TransactionScope:Begin");
 
-            await _localMessageDispatcher.Dispatch(messageResult.Message);
+            using (var scope = _serviceScopeFactory.CreateScope())
+            {
+                _logger.LogDebug("UnitOfWork:Begin");
+                var scopedServiceProvider = scope.ServiceProvider;
+
+                // initialize pipeline
+                var middlewares = _middlewareBuilder.Build(scopedServiceProvider);
+                var pipeline = new Pipeline(middlewares);
+
+                // execute pipeline
+                await pipeline.Invoke(new IncomingRawMessageContext(messageResult.Message));
+
+                _logger.LogDebug("UnitOfWork:End");
+            }
 
             if (!_isAutoCommitEnabled)
             {
                 await messageResult.Commit();
             }
+            _logger.LogDebug("TransactionScope:End");
         }
     }
 }

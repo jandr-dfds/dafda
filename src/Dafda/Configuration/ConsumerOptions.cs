@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Dafda.Consuming;
 using Dafda.Consuming.MessageFilters;
+using Dafda.Middleware;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -14,22 +15,24 @@ namespace Dafda.Configuration
     /// </summary>
     public sealed class ConsumerOptions
     {
-        private readonly IServiceCollection _services;
-        private readonly MessageHandlerRegistry _messageHandlerRegistry;
         private readonly IList<NamingConvention> _namingConventions = new List<NamingConvention>();
         private readonly IDictionary<string, string> _configurations = new Dictionary<string, string>();
+        private readonly IServiceCollection _services;
+        private readonly MessageHandlerRegistry _messageHandlerRegistry;
+        private readonly MiddlewareBuilder<IncomingRawMessageContext> _middlewareBuilder;
 
         private ConfigurationSource _configurationSource = ConfigurationSource.Null;
-        private Func<IServiceProvider, IIncomingMessageFactory> _incomingMessageFactory = _ => new JsonIncomingMessageFactory();
         private Func<IServiceProvider, IConsumerScopeFactory> _consumerScopeFactory;
-        private MessageFilter _messageFilter = MessageFilter.Default;
         private bool _readFromBeginning;
+        private IDeserializer _deserializer;
         private ConsumerErrorHandler _consumerErrorHandler = ConsumerErrorHandler.Default;
 
         internal ConsumerOptions(IServiceCollection services)
         {
             _services = services;
             _messageHandlerRegistry = new MessageHandlerRegistry();
+            _middlewareBuilder = new MiddlewareBuilder<IncomingRawMessageContext>(services);
+            _deserializer = new Deserializer(_messageHandlerRegistry);
         }
 
         /// <summary>
@@ -94,7 +97,7 @@ namespace Dafda.Configuration
             foreach (var additionalPrefix in additionalPrefixes)
             {
                 WithNamingConvention(NamingConvention.UseEnvironmentStyle(additionalPrefix));
-        }
+            }
         }
 
         /// <summary>
@@ -129,18 +132,18 @@ namespace Dafda.Configuration
         /// Override the default Dafda implementation of <see cref="IHandlerUnitOfWorkFactory"/>.
         /// </summary>
         /// <typeparam name="T">A custom implementation of <see cref="IHandlerUnitOfWorkFactory"/>.</typeparam>
+        [Obsolete("This will be removed in a future release")]
         public void WithUnitOfWorkFactory<T>() where T : class, IHandlerUnitOfWorkFactory
         {
-            _services.AddTransient<IHandlerUnitOfWorkFactory, T>();
         }
 
         /// <summary>
         /// Override the default Dafda implementation of <see cref="IHandlerUnitOfWorkFactory"/>.
         /// </summary>
         /// <param name="implementationFactory">The factory that creates the instance of <see cref="IHandlerUnitOfWorkFactory"/>.</param>
+        [Obsolete("This will be removed in a future release")]
         public void WithUnitOfWorkFactory(Func<IServiceProvider, IHandlerUnitOfWorkFactory> implementationFactory)
         {
-            _services.AddTransient(implementationFactory);
         }
 
         internal void WithConsumerScopeFactory(Func<IServiceProvider, IConsumerScopeFactory> consumerScopeFactory)
@@ -152,9 +155,9 @@ namespace Dafda.Configuration
         /// Override the default Dafda implementation of <see cref="IIncomingMessageFactory"/>.
         /// </summary>
         /// <param name="incomingMessageFactory">A custom implementation of <see cref="IIncomingMessageFactory"/>.</param>
+        [Obsolete("This will be removed in a future release")]
         public void WithIncomingMessageFactory(Func<IServiceProvider, IIncomingMessageFactory> incomingMessageFactory)
         {
-            _incomingMessageFactory = incomingMessageFactory;
         }
 
         /// <summary>
@@ -165,11 +168,7 @@ namespace Dafda.Configuration
         /// </summary>
         public void WithPoisonMessageHandling()
         {
-            var inner = _incomingMessageFactory;
-            _incomingMessageFactory = provider => new PoisonAwareIncomingMessageFactory(
-                provider.GetRequiredService<ILogger<PoisonAwareIncomingMessageFactory>>(),
-                inner(provider)
-            );
+            throw new NotImplementedException("Poison message handling is currently not supported");
         }
 
         /// <summary>
@@ -181,7 +180,7 @@ namespace Dafda.Configuration
         /// <param name="messageFilter">Overridable message filter exposing CanAcceptMessage evaluation.></param>
         public void WithMessageFilter(MessageFilter messageFilter)
         {
-            _messageFilter = messageFilter;
+            throw new NotImplementedException("Message filters are currently not supported");
         }
 
         /// <summary>
@@ -204,9 +203,10 @@ namespace Dafda.Configuration
         /// Register a strategy for handling messages that are not explicitly configured with handlers
         /// </summary>
         public void WithUnconfiguredMessageHandlingStrategy<T>()
-            where T: class, IUnconfiguredMessageHandlingStrategy =>
-            _services.AddTransient<IUnconfiguredMessageHandlingStrategy, T>();
-
+            where T : class, IUnconfiguredMessageHandlingStrategy
+        {
+            throw new NotImplementedException("Overwriting the unconfigured message handler is currently not supported");
+        }
 
         /// <summary>
         /// Use the <paramref name="failureEvaluation"></paramref> evaluation method to return the desired
@@ -239,7 +239,16 @@ namespace Dafda.Configuration
         public void WithConsumerErrorHandler(Func<Exception, Task<ConsumerFailureStrategy>> failureEvaluation)
         {
             _consumerErrorHandler = new ConsumerErrorHandler(failureEvaluation);
-        } 
+        }
+
+        /// <summary>
+        /// Overwrite the default deserializer with a custom implementation of <see cref="IDeserializer"/>.
+        /// </summary>
+        /// <param name="deserializer">The deserializer</param>
+        public void WithDeserializer(IDeserializer deserializer)
+        {
+            _deserializer = deserializer;
+        }
 
         private class DefaultConfigurationSource : ConfigurationSource
         {
@@ -258,6 +267,13 @@ namespace Dafda.Configuration
 
         internal ConsumerConfiguration Build()
         {
+            var deserializer = _deserializer ?? new Deserializer(_messageHandlerRegistry);
+            
+            _middlewareBuilder
+                .Register(_ => new DeserializationMiddleware(deserializer))
+                .Register(p => new MessageHandlerMiddleware(_messageHandlerRegistry, p.GetRequiredService))
+                .Register(_ => new InvocationMiddleware());
+
             var configurations = ConfigurationBuilder
                 .ForConsumer
                 .WithNamingConventions(_namingConventions.ToArray())
@@ -273,7 +289,6 @@ namespace Dafda.Configuration
                     loggerFactory: loggerFactory,
                     configuration: configurations,
                     topics: _messageHandlerRegistry.GetAllSubscribedTopics(),
-                    incomingMessageFactory: _incomingMessageFactory(provider),
                     readFromBeginning: _readFromBeginning);
             }
 
@@ -281,8 +296,7 @@ namespace Dafda.Configuration
                 configurations,
                 _messageHandlerRegistry,
                 _consumerScopeFactory ?? DefaultConsumerScopeFactoryFactory,
-                _incomingMessageFactory,
-                _messageFilter,
+                _middlewareBuilder,
                 _consumerErrorHandler);
         }
     }

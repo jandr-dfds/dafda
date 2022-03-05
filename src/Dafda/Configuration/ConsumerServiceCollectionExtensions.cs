@@ -33,11 +33,8 @@ namespace Dafda.Configuration
         public static void AddConsumer(this IServiceCollection services, Action<ConsumerOptions> options = null)
         {
             var consumerOptions = new ConsumerOptions(services);
-            consumerOptions.WithUnitOfWorkFactory<ServiceProviderUnitOfWorkFactory>();
-            consumerOptions.WithUnconfiguredMessageHandlingStrategy<RequireExplicitHandlers>();
             options?.Invoke(consumerOptions);
             var configuration = consumerOptions.Build();
-
 
             var consumerGroupIdRepository = services
                 .Where(x => x.ServiceType == typeof(ConsumerGroupIdRepository))
@@ -61,20 +58,24 @@ namespace Dafda.Configuration
 
             consumerGroupIdRepository.Add(configuration.GroupId);
 
-            ConsumerHostedService HostedServiceFactory(IServiceProvider provider) => new ConsumerHostedService(
+            ConsumerHostedService HostedServiceFactory(IServiceProvider provider)
+            {
+                var consumer = new Consumer(
+                    provider.GetRequiredService<ILogger<Consumer>>(),
+                    configuration.ConsumerScopeFactory(provider),
+                    provider.GetRequiredService<IServiceScopeFactory>(),
+                    configuration.MiddlewareBuilder,
+                    configuration.EnableAutoCommit
+                );
+
+                return new ConsumerHostedService(
                 logger: provider.GetRequiredService<ILogger<ConsumerHostedService>>(),
                 applicationLifetime: provider.GetRequiredService<IHostApplicationLifetime>(),
-                consumer: new Consumer(
-                    configuration.MessageHandlerRegistry,
-                    provider.GetRequiredService<IHandlerUnitOfWorkFactory>(),
-                    configuration.ConsumerScopeFactory(provider),
-                    provider.GetRequiredService<IUnconfiguredMessageHandlingStrategy>(),
-                    configuration.MessageFilter,
-                    configuration.EnableAutoCommit
-                ),
+                    consumer: consumer,
                 configuration.GroupId,
                 configuration.ConsumerErrorHandler
             );
+            }
 
             services.AddTransient<IHostedService, ConsumerHostedService>(HostedServiceFactory);
             services.AddTransient<ConsumerHostedService>(HostedServiceFactory); // NOTE: [jandr] is this needed?

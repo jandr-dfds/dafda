@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Threading;
+﻿using System;
 using System.Threading.Tasks;
 using Dafda.Consuming;
+using Dafda.Middleware;
 using Dafda.Tests.Builders;
 using Dafda.Tests.TestDoubles;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -15,84 +16,71 @@ namespace Dafda.Tests.Consuming
         [Fact]
         public async Task invokes_expected_handler_when_consuming()
         {
-            var handlerMock = new Mock<IMessageHandler<FooMessage>>();
-            var handlerStub = handlerMock.Object;
+            var wasCalled = false;
 
-            var messageRegistrationStub = new MessageRegistrationBuilder()
-                .WithHandlerInstanceType(handlerStub.GetType())
-                .WithMessageInstanceType(typeof(FooMessage))
-                .WithMessageType("foo")
-                .Build();
+            var handlerStub = new MessageHandlerSpy<FooMessage>(() => { wasCalled = true; });
 
             var registry = new MessageHandlerRegistry();
-            registry.Register(messageRegistrationStub);
+            registry.Register<FooMessage, MessageHandlerSpy<FooMessage>>("", "");
 
+            var services = new ServiceCollection();
+            var middlewareBuilder = new MiddlewareBuilder<IncomingRawMessageContext>(services);
+            middlewareBuilder
+                .Register(_ => new DeserializationMiddleware(DeserializerStub.Returns(new FooMessage())))
+                .Register(_ => new MessageHandlerMiddleware(registry, type => handlerStub))
+                .Register(_ => new InvocationMiddleware())
+                ;
+
+            var serviceProvider = services.BuildServiceProvider();
             var consumerScope = new CancellingConsumerScope(new MessageResultBuilder().Build());
             var sut = new ConsumerBuilder()
-                .WithUnitOfWork(new UnitOfWorkStub(handlerStub))
-                .WithMessageHandlerRegistry(registry)
                 .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
+                .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
+                .WithMiddleware(middlewareBuilder)
                 .Build();
 
             await sut.Consume(consumerScope.Token);
 
-            handlerMock.Verify(x => x.Handle(It.IsAny<FooMessage>(), It.IsAny<MessageHandlerContext>()), Times.Once);
+            Assert.True(wasCalled);
         }
 
         [Fact]
         public async Task throws_when_consuming_an_unknown_message_when_explicit_handlers_are_required()
         {
+            var registry = new MessageHandlerRegistry();
+
+            var services = new ServiceCollection();
+            var middlewareBuilder = new MiddlewareBuilder<IncomingRawMessageContext>(services);
+            middlewareBuilder
+                .Register(_ => new DeserializationMiddleware(DeserializerStub.Returns(new FooMessage())))
+                .Register(_ => new MessageHandlerMiddleware(registry, type => null))
+                .Register(_ => new InvocationMiddleware())
+                ;
+
+            var serviceProvider = services.BuildServiceProvider();
             var consumerScope = new CancellingConsumerScope(new MessageResultBuilder().Build());
             var sut = new ConsumerBuilder()
                 .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
+                .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
+                .WithMiddleware(middlewareBuilder)
                 .Build();
 
             await Assert.ThrowsAsync<MissingMessageHandlerRegistrationException>(
                 () => sut.Consume(consumerScope.Token));
         }
 
-        [Fact]
-        public async Task does_not_throw_when_consuming_an_unknown_message_with_no_op_strategy()
-        {
-            var consumerScope = new CancellingConsumerScope(new MessageResultBuilder().Build());
-            var sut =
-                new ConsumerBuilder()
-                    .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
-                    .WithUnitOfWork(
-                        new UnitOfWorkStub(
-                            new NoOpHandler(new Mock<ILogger<NoOpHandler>>().Object)))
-                    .WithUnconfiguredMessageStrategy(new UseNoOpHandler())
-                    .Build();
-
-            await sut.Consume(consumerScope.Token);
-        }
-
-        [Fact]
-        public async Task expected_order_of_handler_invocation_in_unit_of_work()
-        {
-            var orderOfInvocation = new LinkedList<string>();
-
-            var dummyMessageResult = new MessageResultBuilder().WithTransportLevelMessage(new TransportLevelMessageBuilder().WithType("foo").Build()).Build();
-            var dummyMessageRegistration = new MessageRegistrationBuilder().WithMessageType("foo").Build();
-
-            var registry = new MessageHandlerRegistry();
-            registry.Register(dummyMessageRegistration);
-
-            var consumerScope = new CancellingConsumerScope(dummyMessageResult);
-            var sut = new ConsumerBuilder()
-                .WithUnitOfWork(new UnitOfWorkSpy(
-                    handlerInstance: new MessageHandlerSpy<FooMessage>(() => orderOfInvocation.AddLast("during")),
-                    pre: () => orderOfInvocation.AddLast("before"),
-                    post: () => orderOfInvocation.AddLast("after")
-                ))
-                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
-                .WithMessageHandlerRegistry(registry)
-                .Build();
-
-            await sut.Consume(consumerScope.Token);
-
-            Assert.Equal(new[] {"before", "during", "after"}, orderOfInvocation);
-        }
+        // [Fact]
+        // public async Task does_not_throw_when_consuming_an_unknown_message_with_no_op_strategy()
+        // {
+        //     var consumerScope = new CancellingConsumerScope(new MessageResultBuilder().Build());
+        //     var sut =
+        //         new ConsumerBuilder()
+        //             .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
+        //             .WithUnconfiguredMessageStrategy(new UseNoOpHandler())
+        //             .Build();
+        //
+        //     await sut.Consume(consumerScope.Token);
+        // }
 
         [Fact]
         public async Task will_not_call_commit_when_auto_commit_is_enabled()
@@ -121,8 +109,6 @@ namespace Dafda.Tests.Consuming
 
             var consumer = new ConsumerBuilder()
                 .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
-                .WithUnitOfWork(new UnitOfWorkStub(handlerStub))
-                .WithMessageHandlerRegistry(registry)
                 .WithEnableAutoCommit(true)
                 .Build();
 
@@ -158,8 +144,6 @@ namespace Dafda.Tests.Consuming
 
             var consumer = new ConsumerBuilder()
                 .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
-                .WithUnitOfWork(new UnitOfWorkStub(handlerStub))
-                .WithMessageHandlerRegistry(registry)
                 .WithEnableAutoCommit(false)
                 .Build();
 
@@ -171,7 +155,7 @@ namespace Dafda.Tests.Consuming
         [Fact]
         public async Task creates_consumer_scope()
         {
-            var messageResultStub = new MessageResultBuilder().WithTransportLevelMessage(new TransportLevelMessageBuilder().WithType("foo").Build()).Build();
+            var messageResultStub = new MessageResultBuilder().WithRawMessage(new RawMessageBuilder()).Build();
             var handlerStub = Dummy.Of<IMessageHandler<FooMessage>>();
 
             var messageRegistrationStub = new MessageRegistrationBuilder()
@@ -188,8 +172,6 @@ namespace Dafda.Tests.Consuming
 
             var consumer = new ConsumerBuilder()
                 .WithConsumerScopeFactory(spy)
-                .WithUnitOfWork(new UnitOfWorkStub(handlerStub))
-                .WithMessageHandlerRegistry(registry)
                 .Build();
 
             await consumer.Consume(consumerScope.Token);
@@ -200,7 +182,7 @@ namespace Dafda.Tests.Consuming
         [Fact]
         public async Task disposes_consumer_scope()
         {
-            var messageResultStub = new MessageResultBuilder().WithTransportLevelMessage(new TransportLevelMessageBuilder().WithType("foo").Build()).Build();
+            var messageResultStub = new MessageResultBuilder().WithRawMessage(new RawMessageBuilder().Build()).Build();
             var handlerStub = Dummy.Of<IMessageHandler<FooMessage>>();
 
             var messageRegistrationStub = new MessageRegistrationBuilder()
@@ -216,8 +198,6 @@ namespace Dafda.Tests.Consuming
 
             var consumer = new ConsumerBuilder()
                 .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(spy))
-                .WithUnitOfWork(new UnitOfWorkStub(handlerStub))
-                .WithMessageHandlerRegistry(registry)
                 .Build();
 
             await consumer.Consume(spy.Token);
@@ -230,6 +210,28 @@ namespace Dafda.Tests.Consuming
         public class FooMessage
         {
             public string Value { get; set; }
+        }
+
+        private class DeserializerStub : IDeserializer
+        {
+            public static IDeserializer Returns<T>(T instance)
+            {
+                return new DeserializerStub(typeof(T), instance);
+            }
+
+            private readonly Type _messageType;
+            private readonly object _instance;
+
+            public DeserializerStub(Type messageType, object instance)
+            {
+                _messageType = messageType;
+                _instance = instance;
+            }
+
+            public IncomingMessage Deserialize(RawMessage message)
+            {
+                return new IncomingMessage(_messageType, new Metadata(), _instance);
+            }
         }
 
         #endregion

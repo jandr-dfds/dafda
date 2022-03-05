@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,32 +18,16 @@ namespace Dafda.Tests.Configuration
         [Fact( /*Skip = "is this relevant for testing these extensions"*/)]
         public async Task Can_consume_messages()
         {
-            var dummyMessage = new DummyMessage();
-            var messageResult = new MessageResultBuilder()
-                .WithTransportLevelMessage(
-                    new TransportLevelMessageBuilder()
-                .WithType(nameof(DummyMessage))
-                .WithData(dummyMessage)
-                        .Build()
-                )
-                .Build();
             var loops = 0;
-            var consumerScope = new CancellingConsumerScope(messageResult, 2);
-            var subscriberScopeStub = new ConsumerScopeDecoratorWithHooks(
-                inner: consumerScope,
-                postHook: () =>
-                {
-                    loops++;
-                }
-            );
-
-            var messageHandlerRegistry = new MessageHandlerRegistry();
-            messageHandlerRegistry.Register<DummyMessage, DummyMessageHandler>("dummyTopic", nameof(DummyMessage));
+            var consumerScope = new CancellingConsumerScope(new MessageResultBuilder()
+                .WithRawMessage(new RawMessageBuilder())
+                .Build(), 2);
 
             var consumer = new ConsumerBuilder()
-                .WithMessageHandlerRegistry(messageHandlerRegistry)
-                .WithUnitOfWork(new UnitOfWorkStub(new DummyMessageHandler()))
-                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(subscriberScopeStub))
+                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(new ConsumerScopeDecoratorWithHooks(
+                    inner: consumerScope,
+                    postHook: () => { loops++; }
+                )))
                 .Build();
 
             using var consumerHostedService = new ConsumerHostedService(
@@ -57,7 +41,6 @@ namespace Dafda.Tests.Configuration
             await consumerHostedService.ConsumeAll(consumerScope.Token);
 
             Assert.Equal(2, loops);
-            Assert.Equal(dummyMessage, DummyMessageHandler.LastHandledMessage);
         }
 
         [Fact]
@@ -71,7 +54,7 @@ namespace Dafda.Tests.Configuration
                 options.WithBootstrapServers("dummyBootstrapServer");
                 options.WithGroupId("dummyGroupId");
             });
-            
+
             var serviceProvider = services.BuildServiceProvider();
             var consumerHostedServices = serviceProvider
                 .GetServices<IHostedService>()
@@ -87,19 +70,19 @@ namespace Dafda.Tests.Configuration
 
             services.AddLogging();
             services.AddSingleton<IHostApplicationLifetime, DummyApplicationLifetime>();
-            
+
             services.AddConsumer(options =>
             {
                 options.WithBootstrapServers("dummyBootstrapServer");
                 options.WithGroupId("dummyGroupId 1");
             });
-            
+
             services.AddConsumer(options =>
             {
                 options.WithBootstrapServers("dummyBootstrapServer");
                 options.WithGroupId("dummyGroupId 2");
             });
-            
+
             var serviceProvider = services.BuildServiceProvider();
             var consumerHostedServices = serviceProvider
                 .GetServices<IHostedService>()

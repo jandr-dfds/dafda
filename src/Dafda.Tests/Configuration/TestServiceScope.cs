@@ -5,7 +5,6 @@ using Dafda.Consuming;
 using Dafda.Tests.Builders;
 using Dafda.Tests.TestDoubles;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Xunit;
 
 namespace Dafda.Tests.Configuration
@@ -15,41 +14,30 @@ namespace Dafda.Tests.Configuration
         [Fact]
         public async Task Has_expected_number_of_creations_and_disposals_when_transient()
         {
-            var dummyMessage = new DummyMessage();
-            var messageStub = new TransportLevelMessageBuilder()
-                .WithType(nameof(DummyMessage))
-                .WithData(dummyMessage)
-                .Build();
-            var messageResult = new MessageResultBuilder()
-                .WithTransportLevelMessage(messageStub)
-                .Build();
-
-            var services = new ServiceCollection();
-            services.AddTransient<Repository>();
-            services.AddSingleton<IHostApplicationLifetime, DummyApplicationLifetime>();
-            services.AddTransient<DummyMessageHandler>();
-            services.AddLogging();
-
             var createCount = 0;
             var disposeCount = 0;
 
-            services.AddTransient<ScopeSpy>(provider => new ScopeSpy(onCreate: () => createCount++, onDispose: () => disposeCount++));
+            var services = new ServiceCollection();
+            services.AddLogging();
+            services.AddTransient<Repository>();
+            services.AddTransient(_ => new ScopeSpy(onCreate: () => createCount++, onDispose: () => disposeCount++));
 
             var options = new ConsumerOptions(services);
             options.WithGroupId("dummy");
             options.WithBootstrapServers("dummy");
             options.RegisterMessageHandler<DummyMessage, DummyMessageHandler>("dummyTopic", nameof(DummyMessage));
-            options.WithUnitOfWorkFactory(provider => new ServiceProviderUnitOfWorkFactory(provider));
+            options.WithDeserializer(DeserializerStub.Returns(new DummyMessage()));
             var consumerConfiguration = options.Build();
 
             var serviceProvider = services.BuildServiceProvider();
 
-            var consumerScope = new CancellingConsumerScope(messageResult, 2);
+            var consumerScope = new CancellingConsumerScope(new MessageResultBuilder().Build(), 2);
+
             var consumer = new ConsumerBuilder()
-                .WithMessageHandlerRegistry(consumerConfiguration.MessageHandlerRegistry)
-                .WithUnitOfWorkFactory(serviceProvider.GetRequiredService<IHandlerUnitOfWorkFactory>())
                 .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
                 .WithEnableAutoCommit(consumerConfiguration.EnableAutoCommit)
+                .WithMiddleware(consumerConfiguration.MiddlewareBuilder)
+                .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
                 .Build();
 
             await consumer.Consume(consumerScope.Token);
@@ -61,41 +49,30 @@ namespace Dafda.Tests.Configuration
         [Fact]
         public async Task Has_expected_number_of_creations_and_disposals_when_singleton()
         {
-            var dummyMessage = new DummyMessage();
-            var messageStub = new TransportLevelMessageBuilder()
-                .WithType(nameof(DummyMessage))
-                .WithData(dummyMessage)
-                .Build();
-            var messageResult = new MessageResultBuilder()
-                .WithTransportLevelMessage(messageStub)
-                .Build();
-
-            var services = new ServiceCollection();
-            services.AddTransient<Repository>();
-            services.AddSingleton<IHostApplicationLifetime, DummyApplicationLifetime>();
-            services.AddTransient<DummyMessageHandler>();
-            services.AddLogging();
-
             var createCount = 0;
             var disposeCount = 0;
 
-            services.AddSingleton<ScopeSpy>(provider => new ScopeSpy(onCreate: () => createCount++, onDispose: () => disposeCount++));
+            var services = new ServiceCollection();
+            services.AddLogging();
+            services.AddTransient<Repository>();
+            services.AddSingleton(_ => new ScopeSpy(onCreate: () => createCount++, onDispose: () => disposeCount++));
 
             var options = new ConsumerOptions(services);
             options.WithGroupId("dummy");
             options.WithBootstrapServers("dummy");
             options.RegisterMessageHandler<DummyMessage, DummyMessageHandler>("dummyTopic", nameof(DummyMessage));
-            options.WithUnitOfWorkFactory(provider => new ServiceProviderUnitOfWorkFactory(provider));
+            options.WithDeserializer(DeserializerStub.Returns(new DummyMessage()));
             var consumerConfiguration = options.Build();
 
             var serviceProvider = services.BuildServiceProvider();
-            
-            var consumerScope = new CancellingConsumerScope(messageResult, 2);
+
+            var consumerScope = new CancellingConsumerScope(new MessageResultBuilder().Build(), 2);
+
             var consumer = new ConsumerBuilder()
-                .WithMessageHandlerRegistry(consumerConfiguration.MessageHandlerRegistry)
-                .WithUnitOfWorkFactory(serviceProvider.GetRequiredService<IHandlerUnitOfWorkFactory>())
                 .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
                 .WithEnableAutoCommit(consumerConfiguration.EnableAutoCommit)
+                .WithMiddleware(consumerConfiguration.MiddlewareBuilder)
+                .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
                 .Build();
 
             await consumer.Consume(consumerScope.Token);
@@ -107,41 +84,30 @@ namespace Dafda.Tests.Configuration
         [Fact]
         public async Task Has_expected_number_of_creations_and_disposals_when_scoped()
         {
-            var dummyMessage = new DummyMessage();
-            var messageStub = new TransportLevelMessageBuilder()
-                .WithType(nameof(DummyMessage))
-                .WithData(dummyMessage)
-                .Build();
-            var messageResult = new MessageResultBuilder()
-                .WithTransportLevelMessage(messageStub)
-                .Build();
-
-            var services = new ServiceCollection();
-            services.AddTransient<Repository>();
-            services.AddSingleton<IHostApplicationLifetime, DummyApplicationLifetime>();
-            services.AddTransient<DummyMessageHandler>();
-            services.AddLogging();
-
             var createCount = 0;
             var disposeCount = 0;
 
-            services.AddScoped<ScopeSpy>(provider => new ScopeSpy(onCreate: () => createCount++, onDispose: () => disposeCount++));
+            var services = new ServiceCollection();
+            services.AddLogging();
+            services.AddTransient<Repository>();
+            services.AddScoped(_ => new ScopeSpy(onCreate: () => createCount++, onDispose: () => disposeCount++));
 
             var options = new ConsumerOptions(services);
             options.WithGroupId("dummy");
             options.WithBootstrapServers("dummy");
             options.RegisterMessageHandler<DummyMessage, DummyMessageHandler>("dummyTopic", nameof(DummyMessage));
-            options.WithUnitOfWorkFactory(provider => new ServiceProviderUnitOfWorkFactory(provider));
+            options.WithDeserializer(DeserializerStub.Returns(new DummyMessage()));
             var consumerConfiguration = options.Build();
 
             var serviceProvider = services.BuildServiceProvider();
 
-            var consumerScope = new CancellingConsumerScope(messageResult, 2);
+            var consumerScope = new CancellingConsumerScope(new MessageResultBuilder().Build(), 2);
+
             var consumer = new ConsumerBuilder()
-                .WithMessageHandlerRegistry(consumerConfiguration.MessageHandlerRegistry)
-                .WithUnitOfWorkFactory(serviceProvider.GetRequiredService<IHandlerUnitOfWorkFactory>())
                 .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
                 .WithEnableAutoCommit(consumerConfiguration.EnableAutoCommit)
+                .WithMiddleware(consumerConfiguration.MiddlewareBuilder)
+                .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
                 .Build();
 
             await consumer.Consume(consumerScope.Token);
@@ -216,6 +182,28 @@ namespace Dafda.Tests.Configuration
                 }
 
                 await Task.Delay(10);
+            }
+        }
+
+        private class DeserializerStub : IDeserializer
+        {
+            public static IDeserializer Returns<T>(T instance)
+            {
+                return new DeserializerStub(typeof(T), instance);
+            }
+
+            private readonly Type _messageType;
+            private readonly object _instance;
+
+            public DeserializerStub(Type messageType, object instance)
+            {
+                _messageType = messageType;
+                _instance = instance;
+            }
+
+            public IncomingMessage Deserialize(RawMessage message)
+            {
+                return new IncomingMessage(_messageType, new Metadata(), _instance);
             }
         }
     }
