@@ -17,7 +17,13 @@ internal class Pipeline
     {
         var pipeline = CreateMiddlewarePipelineDelegate<TContext>();
 
-        return pipeline.Invoke(startingContext);
+        if (pipeline == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        return pipeline(startingContext);
+
     }
 
     private Func<TContext, Task> CreateMiddlewarePipelineDelegate<TContext>()

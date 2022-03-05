@@ -47,6 +47,14 @@ public class TestPipeline
         }, spy.RecordedContexts);
     }
 
+    [Fact]
+    public async Task can_handle_no_middleware()
+    {
+        var pipeline = new Pipeline();
+
+        await pipeline.Invoke(new SomeContext());
+    }
+
     private class SomeContext : IMiddlewareContext
     {
     }
