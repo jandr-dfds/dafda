@@ -1,12 +1,37 @@
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace Dafda.Configuration
 {
     internal class ConfigurationBuilder
     {
+        private static readonly string[] DefaultConsumerConfigurationKeys =
+        {
+            ConfigurationKey.GroupId,
+            ConfigurationKey.EnableAutoCommit,
+            ConfigurationKey.AllowAutoCreateTopics,
+            ConfigurationKey.BootstrapServers,
+            ConfigurationKey.BrokerVersionFallback,
+            ConfigurationKey.ApiVersionFallbackMs,
+            ConfigurationKey.SslCaLocation,
+            ConfigurationKey.SaslUsername,
+            ConfigurationKey.SaslPassword,
+            ConfigurationKey.SaslMechanisms,
+            ConfigurationKey.SecurityProtocol,
+        };
+
+        private static readonly string[] RequiredConsumerConfigurationKeys =
+        {
+            ConfigurationKey.GroupId,
+            ConfigurationKey.BootstrapServers
+        };
+
+        public static ConfigurationBuilder ForConsumer => new(DefaultConsumerConfigurationKeys, RequiredConsumerConfigurationKeys);
+
         private static readonly string[] EmptyConfigurationKeys = new string[0];
-        private static readonly NamingConvention[] DefaultNamingConventions = {NamingConvention.Default};
+        private static readonly NamingConvention[] DefaultNamingConventions = { NamingConvention.Default };
 
         private readonly string[] _configurationKeys;
         private readonly string[] _requiredConfigurationKeys;
@@ -34,7 +59,7 @@ namespace Dafda.Configuration
             _configurations = configurations;
             _configurationReporter = configurationReporter;
         }
-
+        
         public ConfigurationBuilder WithConfigurationKeys(params string[] configurationKeys)
         {
             return new ConfigurationBuilder(configurationKeys, _requiredConfigurationKeys, _namingConventions, _configurationSource, _configurations, _configurationReporter);
@@ -65,13 +90,13 @@ namespace Dafda.Configuration
             return new ConfigurationBuilder(_configurationKeys, _requiredConfigurationKeys, _namingConventions, _configurationSource, _configurations, configurationReporter);
         }
 
-        public IDictionary<string, string> Build()
+        public Configuration Build()
         {
             var configurations = FillConfiguration();
 
             ValidateConfiguration(configurations);
 
-            return configurations;
+            return new Configuration(configurations);
         }
 
         private IDictionary<string, string> FillConfiguration()
@@ -137,9 +162,33 @@ namespace Dafda.Configuration
             {
                 if (!configurations.TryGetValue(key, out var value) || string.IsNullOrEmpty(value))
                 {
-                    var message = "Invalid configuration:" + System.Environment.NewLine + _configurationReporter.Report();
+                    var message = "Invalid configuration:" + Environment.NewLine + _configurationReporter.Report();
                     throw new InvalidConfigurationException(message);
                 }
+            }
+        }
+    }
+
+    internal class Configuration : ReadOnlyDictionary<string, string>
+    {
+        public Configuration(IDictionary<string, string> dictionary) : base(dictionary)
+        {
+        }
+
+        public string GroupId => this[ConfigurationKey.GroupId];
+
+        public bool EnableAutoCommit
+        {
+            get
+            {
+                const bool defaultAutoCommitStrategy = true;
+
+                if (!TryGetValue(ConfigurationKey.EnableAutoCommit, out var value))
+                {
+                    return defaultAutoCommitStrategy;
+                }
+
+                return bool.Parse(value);
             }
         }
     }
