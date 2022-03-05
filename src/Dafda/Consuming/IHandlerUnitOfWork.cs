@@ -9,6 +9,7 @@ namespace Dafda.Consuming
     /// <see cref="IHandlerUnitOfWorkFactory.CreateForHandlerType"/>, as the
     /// argument to <see cref="Run"/>.
     /// </summary>
+    [Obsolete("This will be removed in a future release")]
     public interface IHandlerUnitOfWork
     {
         /// <summary>
