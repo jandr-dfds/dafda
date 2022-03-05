@@ -16,12 +16,12 @@ namespace Dafda.Configuration
         private readonly ConfigurationReporter _configurationReporter;
 
         public ConfigurationBuilder()
-            : this(EmptyConfigurationKeys, EmptyConfigurationKeys, DefaultNamingConventions, ConfigurationSource.Null, new Dictionary<string, string>(), ConfigurationReporter.Null)
+            : this(EmptyConfigurationKeys, EmptyConfigurationKeys, DefaultNamingConventions, ConfigurationSource.Null, new Dictionary<string, string>(), ConfigurationReporter.CreateDefault())
         {
         }
 
         public ConfigurationBuilder(string[] configurationKeys, string[] requiredConfigurationKeys)
-            : this(configurationKeys ?? EmptyConfigurationKeys, requiredConfigurationKeys ?? EmptyConfigurationKeys, DefaultNamingConventions, ConfigurationSource.Null, new Dictionary<string, string>(), ConfigurationReporter.Null)
+            : this(configurationKeys ?? EmptyConfigurationKeys, requiredConfigurationKeys ?? EmptyConfigurationKeys, DefaultNamingConventions, ConfigurationSource.Null, new Dictionary<string, string>(), ConfigurationReporter.CreateDefault())
         {
         }
 

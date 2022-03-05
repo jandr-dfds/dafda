@@ -168,11 +168,11 @@ namespace Dafda.Tests.Configuration
 
             Assert.Equal(expected:
                 $"{NL}" +
-                $"key  source                  value   keys{NL}" +
-                $"-----------------------------------------------{NL}" +
-                $"key3 MANUAL                  value   {NL}" +
-                $"key1 ConfigurationSourceStub MISSING key1, KEY1{NL}" +
-                $"key2 ConfigurationSourceStub value   KEY2{NL}",
+                $"  key  source                  value   keys{NL}" +
+                $"-------------------------------------------------{NL}" +
+                $"  key3 MANUAL                  value   {NL}" +
+                $"R key1 ConfigurationSourceStub MISSING key1, KEY1{NL}" +
+                $"R key2 ConfigurationSourceStub value   KEY2{NL}",
                 report);
         }
 
