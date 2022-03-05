@@ -35,19 +35,19 @@ namespace Dafda.Tests.Configuration
 
             services.AddTransient<ScopeSpy>(provider => new ScopeSpy(onCreate: () => createCount++, onDispose: () => disposeCount++));
 
-            var serviceProvider = services.BuildServiceProvider();
+            var options = new ConsumerOptions(services);
+            options.WithGroupId("dummy");
+            options.WithBootstrapServers("dummy");
+            options.RegisterMessageHandler<DummyMessage, DummyMessageHandler>("dummyTopic", nameof(DummyMessage));
+            options.WithUnitOfWorkFactory(provider => new ServiceProviderUnitOfWorkFactory(provider));
+            var consumerConfiguration = options.Build();
 
-            var consumerConfiguration = new ConsumerConfigurationBuilder()
-                .WithGroupId("dummy")
-                .WithBootstrapServers("dummy")
-                .RegisterMessageHandler<DummyMessage, DummyMessageHandler>("dummyTopic", nameof(DummyMessage))
-                .WithUnitOfWorkFactory(new ServiceProviderUnitOfWorkFactory(serviceProvider))
-                .Build();
+            var serviceProvider = services.BuildServiceProvider();
 
             var consumerScope = new CancellingConsumerScope(messageResult, 2);
             var consumer = new ConsumerBuilder()
                 .WithMessageHandlerRegistry(consumerConfiguration.MessageHandlerRegistry)
-                .WithUnitOfWorkFactory(consumerConfiguration.UnitOfWorkFactory)
+                .WithUnitOfWorkFactory(serviceProvider.GetRequiredService<IHandlerUnitOfWorkFactory>())
                 .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
                 .WithEnableAutoCommit(consumerConfiguration.EnableAutoCommit)
                 .Build();
@@ -81,19 +81,19 @@ namespace Dafda.Tests.Configuration
 
             services.AddSingleton<ScopeSpy>(provider => new ScopeSpy(onCreate: () => createCount++, onDispose: () => disposeCount++));
 
+            var options = new ConsumerOptions(services);
+            options.WithGroupId("dummy");
+            options.WithBootstrapServers("dummy");
+            options.RegisterMessageHandler<DummyMessage, DummyMessageHandler>("dummyTopic", nameof(DummyMessage));
+            options.WithUnitOfWorkFactory(provider => new ServiceProviderUnitOfWorkFactory(provider));
+            var consumerConfiguration = options.Build();
+
             var serviceProvider = services.BuildServiceProvider();
-
-            var consumerConfiguration = new ConsumerConfigurationBuilder()
-                .WithGroupId("dummy")
-                .WithBootstrapServers("dummy")
-                .RegisterMessageHandler<DummyMessage, DummyMessageHandler>("dummyTopic", nameof(DummyMessage))
-                .WithUnitOfWorkFactory(new ServiceProviderUnitOfWorkFactory(serviceProvider))
-                .Build();
-
+            
             var consumerScope = new CancellingConsumerScope(messageResult, 2);
             var consumer = new ConsumerBuilder()
                 .WithMessageHandlerRegistry(consumerConfiguration.MessageHandlerRegistry)
-                .WithUnitOfWorkFactory(consumerConfiguration.UnitOfWorkFactory)
+                .WithUnitOfWorkFactory(serviceProvider.GetRequiredService<IHandlerUnitOfWorkFactory>())
                 .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
                 .WithEnableAutoCommit(consumerConfiguration.EnableAutoCommit)
                 .Build();
@@ -127,19 +127,19 @@ namespace Dafda.Tests.Configuration
 
             services.AddScoped<ScopeSpy>(provider => new ScopeSpy(onCreate: () => createCount++, onDispose: () => disposeCount++));
 
-            var serviceProvider = services.BuildServiceProvider();
+            var options = new ConsumerOptions(services);
+            options.WithGroupId("dummy");
+            options.WithBootstrapServers("dummy");
+            options.RegisterMessageHandler<DummyMessage, DummyMessageHandler>("dummyTopic", nameof(DummyMessage));
+            options.WithUnitOfWorkFactory(provider => new ServiceProviderUnitOfWorkFactory(provider));
+            var consumerConfiguration = options.Build();
 
-            var consumerConfiguration = new ConsumerConfigurationBuilder()
-                .WithGroupId("dummy")
-                .WithBootstrapServers("dummy")
-                .RegisterMessageHandler<DummyMessage, DummyMessageHandler>("dummyTopic", nameof(DummyMessage))
-                .WithUnitOfWorkFactory(new ServiceProviderUnitOfWorkFactory(serviceProvider))
-                .Build();
+            var serviceProvider = services.BuildServiceProvider();
 
             var consumerScope = new CancellingConsumerScope(messageResult, 2);
             var consumer = new ConsumerBuilder()
                 .WithMessageHandlerRegistry(consumerConfiguration.MessageHandlerRegistry)
-                .WithUnitOfWorkFactory(consumerConfiguration.UnitOfWorkFactory)
+                .WithUnitOfWorkFactory(serviceProvider.GetRequiredService<IHandlerUnitOfWorkFactory>())
                 .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
                 .WithEnableAutoCommit(consumerConfiguration.EnableAutoCommit)
                 .Build();

@@ -18,7 +18,7 @@ namespace Dafda.Tests.Consuming
 
             var transportLevelMessage = sut.Create("");
             var data = transportLevelMessage.ReadDataAs(typeof(object));
-            
+
             Assert.Same(dummy, data);
         }
 
@@ -38,11 +38,11 @@ namespace Dafda.Tests.Consuming
         [Fact]
         public void Can_register_poison_aware_inner_message_factory()
         {
-            var configuration = new ConsumerConfigurationBuilder()
-                .WithGroupId("foo")
-                .WithBootstrapServers("bar")
-                .WithPoisonMessageHandling()
-                .Build();
+            var options = new ConsumerOptions(new ServiceCollection());
+            options.WithGroupId("foo");
+            options.WithBootstrapServers("bar");
+            options.WithPoisonMessageHandling();
+            var configuration = options.Build();
 
             var provider = new ServiceCollection()
                 .AddLogging()

@@ -32,12 +32,12 @@ namespace Dafda.Configuration
         /// <param name="options">Use this action to override Dafda and underlying Kafka configuration.</param>
         public static void AddConsumer(this IServiceCollection services, Action<ConsumerOptions> options = null)
         {
-            var configurationBuilder = new ConsumerConfigurationBuilder();
-            var consumerOptions = new ConsumerOptions(configurationBuilder, services);
+            var consumerOptions = new ConsumerOptions(services);
             consumerOptions.WithUnitOfWorkFactory<ServiceProviderUnitOfWorkFactory>();
             consumerOptions.WithUnconfiguredMessageHandlingStrategy<RequireExplicitHandlers>();
             options?.Invoke(consumerOptions);
-            var configuration = configurationBuilder.Build();
+            var configuration = consumerOptions.Build();
+
 
             var consumerGroupIdRepository = services
                 .Where(x => x.ServiceType == typeof(ConsumerGroupIdRepository))

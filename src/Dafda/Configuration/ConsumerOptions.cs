@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Dafda.Consuming;
 using Dafda.Consuming.MessageFilters;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Dafda.Configuration
 {
@@ -11,13 +14,22 @@ namespace Dafda.Configuration
     /// </summary>
     public sealed class ConsumerOptions
     {
-        private readonly ConsumerConfigurationBuilder _builder;
         private readonly IServiceCollection _services;
+        private readonly MessageHandlerRegistry _messageHandlerRegistry;
+        private readonly IList<NamingConvention> _namingConventions = new List<NamingConvention>();
+        private readonly IDictionary<string, string> _configurations = new Dictionary<string, string>();
 
-        internal ConsumerOptions(ConsumerConfigurationBuilder builder, IServiceCollection services)
+        private ConfigurationSource _configurationSource = ConfigurationSource.Null;
+        private Func<IServiceProvider, IIncomingMessageFactory> _incomingMessageFactory = _ => new JsonIncomingMessageFactory();
+        private Func<IServiceProvider, IConsumerScopeFactory> _consumerScopeFactory;
+        private MessageFilter _messageFilter = MessageFilter.Default;
+        private bool _readFromBeginning;
+        private ConsumerErrorHandler _consumerErrorHandler = ConsumerErrorHandler.Default;
+
+        internal ConsumerOptions(IServiceCollection services)
         {
             _services = services;
-            _builder = builder;
+            _messageHandlerRegistry = new MessageHandlerRegistry();
         }
 
         /// <summary>
@@ -25,7 +37,7 @@ namespace Dafda.Configuration
         /// </summary>
         public void ReadFromBeginningOfTopics()
         {
-            _builder.ReadFromBeginning();
+            _readFromBeginning = true;
         }
 
         /// <summary>
@@ -34,7 +46,7 @@ namespace Dafda.Configuration
         /// <param name="configurationSource">The <see cref="ConfigurationSource"/> to use.</param>
         public void WithConfigurationSource(ConfigurationSource configurationSource)
         {
-            _builder.WithConfigurationSource(configurationSource);
+            _configurationSource = configurationSource;
         }
 
         /// <summary>
@@ -43,7 +55,7 @@ namespace Dafda.Configuration
         /// <param name="configuration">The configuration instance.</param>
         public void WithConfigurationSource(Microsoft.Extensions.Configuration.IConfiguration configuration)
         {
-            _builder.WithConfigurationSource(new DefaultConfigurationSource(configuration));
+            WithConfigurationSource(new DefaultConfigurationSource(configuration));
         }
 
         /// <summary>
@@ -53,7 +65,12 @@ namespace Dafda.Configuration
         /// <param name="converter">Use this to transform keys.</param>
         public void WithNamingConvention(Func<string, string> converter)
         {
-            _builder.WithNamingConvention(converter);
+            WithNamingConvention(NamingConvention.UseCustom(converter));
+        }
+
+        internal void WithNamingConvention(NamingConvention namingConvention)
+        {
+            _namingConventions.Add(namingConvention);
         }
 
         /// <summary>
@@ -72,7 +89,12 @@ namespace Dafda.Configuration
         /// <param name="additionalPrefixes">Additional prefixes to use before keys.</param>
         public void WithEnvironmentStyle(string prefix = null, params string[] additionalPrefixes)
         {
-            _builder.WithEnvironmentStyle(prefix, additionalPrefixes);
+            WithNamingConvention(NamingConvention.UseEnvironmentStyle(prefix));
+
+            foreach (var additionalPrefix in additionalPrefixes)
+            {
+                WithNamingConvention(NamingConvention.UseEnvironmentStyle(additionalPrefix));
+        }
         }
 
         /// <summary>
@@ -82,7 +104,7 @@ namespace Dafda.Configuration
         /// <param name="value">The configuration value.</param>
         public void WithConfiguration(string key, string value)
         {
-            _builder.WithConfiguration(key, value);
+            _configurations[key] = value;
         }
 
         /// <summary>
@@ -91,7 +113,7 @@ namespace Dafda.Configuration
         /// <param name="groupId">The group id for the consumer.</param>
         public void WithGroupId(string groupId)
         {
-            _builder.WithGroupId(groupId);
+            WithConfiguration(ConfigurationKey.GroupId, groupId);
         }
 
         /// <summary>
@@ -100,7 +122,7 @@ namespace Dafda.Configuration
         /// <param name="bootstrapServers">A list of bootstrap servers.</param>
         public void WithBootstrapServers(string bootstrapServers)
         {
-            _builder.WithBootstrapServers(bootstrapServers);
+            WithConfiguration(ConfigurationKey.BootstrapServers, bootstrapServers);
         }
 
         /// <summary>
@@ -123,7 +145,7 @@ namespace Dafda.Configuration
 
         internal void WithConsumerScopeFactory(Func<IServiceProvider, IConsumerScopeFactory> consumerScopeFactory)
         {
-            _builder.WithConsumerScopeFactory(consumerScopeFactory);
+            _consumerScopeFactory = consumerScopeFactory;
         }
 
         /// <summary>
@@ -132,7 +154,7 @@ namespace Dafda.Configuration
         /// <param name="incomingMessageFactory">A custom implementation of <see cref="IIncomingMessageFactory"/>.</param>
         public void WithIncomingMessageFactory(Func<IServiceProvider, IIncomingMessageFactory> incomingMessageFactory)
         {
-            _builder.WithIncomingMessageFactory(incomingMessageFactory);
+            _incomingMessageFactory = incomingMessageFactory;
         }
 
         /// <summary>
@@ -143,7 +165,11 @@ namespace Dafda.Configuration
         /// </summary>
         public void WithPoisonMessageHandling()
         {
-            _builder.WithPoisonMessageHandling();
+            var inner = _incomingMessageFactory;
+            _incomingMessageFactory = provider => new PoisonAwareIncomingMessageFactory(
+                provider.GetRequiredService<ILogger<PoisonAwareIncomingMessageFactory>>(),
+                inner(provider)
+            );
         }
 
         /// <summary>
@@ -155,7 +181,7 @@ namespace Dafda.Configuration
         /// <param name="messageFilter">Overridable message filter exposing CanAcceptMessage evaluation.></param>
         public void WithMessageFilter(MessageFilter messageFilter)
         {
-            _builder.WithMessageFilter(messageFilter);
+            _messageFilter = messageFilter;
         }
 
         /// <summary>
@@ -170,7 +196,7 @@ namespace Dafda.Configuration
         public void RegisterMessageHandler<TMessage, TMessageHandler>(string topic, string messageType)
             where TMessageHandler : class, IMessageHandler<TMessage>
         {
-            _builder.RegisterMessageHandler<TMessage, TMessageHandler>(topic, messageType);
+            _messageHandlerRegistry.Register<TMessage, TMessageHandler>(topic, messageType);
             _services.AddTransient<TMessageHandler>();
         }
 
@@ -212,7 +238,7 @@ namespace Dafda.Configuration
         /// <see cref="ConsumerFailureStrategy"/>.</param>
         public void WithConsumerErrorHandler(Func<Exception, Task<ConsumerFailureStrategy>> failureEvaluation)
         {
-            _builder.WithConsumerErrorHandler(failureEvaluation);
+            _consumerErrorHandler = new ConsumerErrorHandler(failureEvaluation);
         } 
 
         private class DefaultConfigurationSource : ConfigurationSource
@@ -228,6 +254,36 @@ namespace Dafda.Configuration
             {
                 return _configuration[key];
             }
+        }
+
+        internal ConsumerConfiguration Build()
+        {
+            var configurations = ConfigurationBuilder
+                .ForConsumer
+                .WithNamingConventions(_namingConventions.ToArray())
+                .WithConfigurationSource(_configurationSource)
+                .WithConfigurations(_configurations)
+                .Build();
+
+            IConsumerScopeFactory DefaultConsumerScopeFactoryFactory(IServiceProvider provider)
+            {
+                var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
+
+                return new KafkaBasedConsumerScopeFactory(
+                    loggerFactory: loggerFactory,
+                    configuration: configurations,
+                    topics: _messageHandlerRegistry.GetAllSubscribedTopics(),
+                    incomingMessageFactory: _incomingMessageFactory(provider),
+                    readFromBeginning: _readFromBeginning);
+            }
+
+            return new ConsumerConfiguration(
+                configurations,
+                _messageHandlerRegistry,
+                _consumerScopeFactory ?? DefaultConsumerScopeFactoryFactory,
+                _incomingMessageFactory,
+                _messageFilter,
+                _consumerErrorHandler);
         }
     }
 }
