@@ -1,5 +1,4 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Dafda.Middleware;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,20 +9,20 @@ namespace Dafda.Consuming
     internal class Consumer
     {
         private readonly ILogger<Consumer> _logger;
+        private readonly Func<ConsumerScope> _consumerScopeFactory;
         private readonly IServiceScopeFactory _serviceScopeFactory;
-        private readonly IConsumerScopeFactory _consumerScopeFactory;
         private readonly MiddlewareBuilder<IncomingRawMessageContext> _middlewareBuilder;
         private readonly bool _isAutoCommitEnabled;
 
         public Consumer(
             ILogger<Consumer> logger,
-            IConsumerScopeFactory consumerScopeFactory,
-            IServiceScopeFactory serviceScopeFactory, 
+            Func<ConsumerScope> consumerScopeFactory,
+            IServiceScopeFactory serviceScopeFactory,
             MiddlewareBuilder<IncomingRawMessageContext> middlewareBuilder,
             bool isAutoCommitEnabled = false)
         {
             _logger = logger;
-            _consumerScopeFactory = consumerScopeFactory ?? throw new ArgumentNullException(nameof(consumerScopeFactory));
+            _consumerScopeFactory = consumerScopeFactory;
             _serviceScopeFactory = serviceScopeFactory;
             _middlewareBuilder = middlewareBuilder;
             _isAutoCommitEnabled = isAutoCommitEnabled;
@@ -31,27 +30,25 @@ namespace Dafda.Consuming
 
         public async Task Consume(Cancelable cancelable)
         {
-            using (var consumerScope = _consumerScopeFactory.CreateConsumerScope())
+            using (var consumerScope = _consumerScopeFactory())
             {
                 while (!cancelable.IsCancelled)
                 {
-                    await ProcessNextMessage(consumerScope, cancelable.Token);
+                    await consumerScope.Consume(OnMessage, cancelable.Token);
                 }
             }
         }
 
-        private async Task ProcessNextMessage(ConsumerScope consumerScope, CancellationToken cancellationToken)
+        private async Task OnMessage(MessageResult messageResult)
         {
-            var messageResult = await consumerScope.GetNext(cancellationToken);
-            _logger.LogDebug("TransactionScope:Begin");
+            _logger.LogDebug("MessageScope:Begin");
 
             using (var scope = _serviceScopeFactory.CreateScope())
             {
                 _logger.LogDebug("UnitOfWork:Begin");
-                var scopedServiceProvider = scope.ServiceProvider;
 
                 // initialize pipeline
-                var middlewares = _middlewareBuilder.Build(scopedServiceProvider);
+                var middlewares = _middlewareBuilder.Build(scope.ServiceProvider);
                 var pipeline = new Pipeline(middlewares);
 
                 // execute pipeline
@@ -64,7 +61,8 @@ namespace Dafda.Consuming
             {
                 await messageResult.Commit();
             }
-            _logger.LogDebug("TransactionScope:End");
+
+            _logger.LogDebug("MessageScope:End");
         }
     }
 }

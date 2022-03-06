@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Dafda.Consuming;
 using Dafda.Middleware;
@@ -31,9 +31,8 @@ namespace Dafda.Tests.Consuming
                 ;
 
             var serviceProvider = services.BuildServiceProvider();
-            var consumerScope = new ConsumerScopeStub(new MessageResultBuilder().Build());
             var sut = new ConsumerBuilder()
-                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
+                .WithConsumerScope(new ConsumerScopeStub(new MessageResultBuilder().Build()))
                 .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
                 .WithMiddleware(middlewareBuilder)
                 .Build();
@@ -57,9 +56,8 @@ namespace Dafda.Tests.Consuming
                 ;
 
             var serviceProvider = services.BuildServiceProvider();
-            var consumerScope = new ConsumerScopeStub(new MessageResultBuilder().Build());
             var sut = new ConsumerBuilder()
-                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
+                .WithConsumerScope(new ConsumerScopeStub(new MessageResultBuilder().Build()))
                 .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
                 .WithMiddleware(middlewareBuilder)
                 .Build();
@@ -102,12 +100,11 @@ namespace Dafda.Tests.Consuming
                 })
                 .Build();
 
-            var consumerScope = new ConsumerScopeStub(resultSpy);
             var registry = new MessageHandlerRegistry();
             registry.Register(messageRegistrationStub);
 
             var consumer = new ConsumerBuilder()
-                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
+                .WithConsumerScope(new ConsumerScopeStub(resultSpy))
                 .WithEnableAutoCommit(true)
                 .Build();
 
@@ -137,45 +134,17 @@ namespace Dafda.Tests.Consuming
                 })
                 .Build();
 
-            var consumerScope = new ConsumerScopeStub(resultSpy);
             var registry = new MessageHandlerRegistry();
             registry.Register(messageRegistrationStub);
 
             var consumer = new ConsumerBuilder()
-                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
+                .WithConsumerScope(new ConsumerScopeStub(resultSpy))
                 .WithEnableAutoCommit(false)
                 .Build();
 
             await consumer.Consume(Consume.Once);
 
             Assert.True(wasCalled);
-        }
-
-        [Fact]
-        public async Task creates_consumer_scope()
-        {
-            var messageResultStub = new MessageResultBuilder().WithRawMessage(new RawMessageBuilder()).Build();
-            var handlerStub = Dummy.Of<IMessageHandler<FooMessage>>();
-
-            var messageRegistrationStub = new MessageRegistrationBuilder()
-                .WithHandlerInstanceType(handlerStub.GetType())
-                .WithMessageInstanceType(typeof(FooMessage))
-                .WithMessageType("foo")
-                .Build();
-
-            var consumerScope = new ConsumerScopeStub(messageResultStub);
-            var spy = new ConsumerScopeFactorySpy(consumerScope);
-
-            var registry = new MessageHandlerRegistry();
-            registry.Register(messageRegistrationStub);
-
-            var consumer = new ConsumerBuilder()
-                .WithConsumerScopeFactory(spy)
-                .Build();
-
-            await consumer.Consume(Consume.Once);
-
-            Assert.Equal(1, spy.CreateConsumerScopeCalled);
         }
 
         [Fact]
@@ -196,12 +165,13 @@ namespace Dafda.Tests.Consuming
             registry.Register(messageRegistrationStub);
 
             var consumer = new ConsumerBuilder()
-                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(spy))
+                .WithConsumerScope(spy)
                 .Build();
 
             await consumer.Consume(Consume.Once);
 
-            Assert.Equal(1, spy.Disposed);
+            Assert.Equal(1, spy.ConsumeCalled);
+            Assert.True(spy.Disposed);
         }
 
         #region helper classes

@@ -6,7 +6,16 @@ namespace Dafda.Consuming
 {
     internal abstract class ConsumerScope : IDisposable
     {
-        public abstract Task<MessageResult> GetNext(CancellationToken cancellationToken);
-        public abstract void Dispose();
+        public abstract Task Consume(Func<MessageResult, Task> onMessageCallback, CancellationToken cancellationToken);
+
+        protected virtual void Dispose(bool disposing)
+        {
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
     }
 }

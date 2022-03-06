@@ -22,7 +22,7 @@ namespace Dafda.Configuration
         private readonly MiddlewareBuilder<IncomingRawMessageContext> _middlewareBuilder;
 
         private ConfigurationSource _configurationSource = ConfigurationSource.Null;
-        private Func<IServiceProvider, IConsumerScopeFactory> _consumerScopeFactory;
+        private Func<IServiceProvider, ConsumerScope> _consumerScopeFactory;
         private bool _readFromBeginning;
         private IDeserializer _deserializer;
         private ConsumerErrorHandler _consumerErrorHandler = ConsumerErrorHandler.Default;
@@ -146,7 +146,7 @@ namespace Dafda.Configuration
         {
         }
 
-        internal void WithConsumerScopeFactory(Func<IServiceProvider, IConsumerScopeFactory> consumerScopeFactory)
+        internal void WithConsumerScopeFactory(Func<IServiceProvider, ConsumerScope> consumerScopeFactory)
         {
             _consumerScopeFactory = consumerScopeFactory;
         }
@@ -274,26 +274,24 @@ namespace Dafda.Configuration
                 .Register(p => new MessageHandlerMiddleware(_messageHandlerRegistry, p.GetRequiredService))
                 .Register(_ => new InvocationMiddleware());
 
-            var configurations = ConfigurationBuilder
+            var configuration = ConfigurationBuilder
                 .ForConsumer
                 .WithNamingConventions(_namingConventions.ToArray())
                 .WithConfigurationSource(_configurationSource)
                 .WithConfigurations(_configurations)
                 .Build();
 
-            IConsumerScopeFactory DefaultConsumerScopeFactoryFactory(IServiceProvider provider)
+            ConsumerScope DefaultConsumerScopeFactoryFactory(IServiceProvider provider)
             {
-                var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
-
-                return new KafkaBasedConsumerScopeFactory(
-                    loggerFactory: loggerFactory,
-                    configuration: configurations,
+                return new KafkaConsumerScope(
+                    logger: provider.GetRequiredService<ILogger<KafkaConsumerScope>>(), 
+                    configuration: configuration, 
                     topics: _messageHandlerRegistry.GetAllSubscribedTopics(),
                     readFromBeginning: _readFromBeginning);
             }
 
             return new ConsumerConfiguration(
-                configurations,
+                configuration,
                 _messageHandlerRegistry,
                 _consumerScopeFactory ?? DefaultConsumerScopeFactoryFactory,
                 _middlewareBuilder,

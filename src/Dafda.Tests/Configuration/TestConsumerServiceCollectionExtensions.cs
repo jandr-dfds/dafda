@@ -1,6 +1,4 @@
-using System;
-using System.Linq;
-using System.Threading;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using Dafda.Configuration;
 using Dafda.Consuming;
@@ -18,15 +16,13 @@ namespace Dafda.Tests.Configuration
         [Fact( /*Skip = "is this relevant for testing these extensions"*/)]
         public async Task Can_consume_messages()
         {
-            var loops = 0;
+            var spy = new ConsumerScopeSpy(new MessageResultBuilder()
+                .WithRawMessage(new RawMessageBuilder())
+                .Build()
+            );
 
             var consumer = new ConsumerBuilder()
-                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(new ConsumerScopeDecoratorWithHooks(
-                    inner: new ConsumerScopeStub(new MessageResultBuilder()
-                        .WithRawMessage(new RawMessageBuilder())
-                        .Build()),
-                    postHook: () => { loops++; }
-                )))
+                .WithConsumerScope(spy)
                 .Build();
 
             using var consumerHostedService = new ConsumerHostedService(
@@ -39,7 +35,7 @@ namespace Dafda.Tests.Configuration
 
             await consumerHostedService.ConsumeAll(Consume.Twice);
 
-            Assert.Equal(2, loops);
+            Assert.Equal(2, spy.ConsumeCalled);
         }
 
         [Fact]
@@ -123,7 +119,7 @@ namespace Dafda.Tests.Configuration
             {
                 options.WithBootstrapServers("dummyBootstrapServer");
                 options.WithGroupId("dummyGroupId");
-                options.WithConsumerScopeFactory(_ => new FailingConsumerScopeFactory());
+                // options.WithConsumerScopeFactory(_ => new FailingConsumerScopeFactory());
             });
             var serviceProvider = services.BuildServiceProvider();
 
@@ -150,7 +146,7 @@ namespace Dafda.Tests.Configuration
             {
                 options.WithBootstrapServers("dummyBootstrapServer");
                 options.WithGroupId("dummyGroupId");
-                options.WithConsumerScopeFactory(_ => new FailingConsumerScopeFactory());
+                // options.WithConsumerScopeFactory(_ => new FailingConsumerScopeFactory());
                 options.WithConsumerErrorHandler(exception =>
                 {
                     if (++count > failuresBeforeQuitting)
@@ -188,39 +184,12 @@ namespace Dafda.Tests.Configuration
             public static object LastHandledMessage { get; private set; }
         }
 
-        private class ConsumerScopeDecoratorWithHooks : ConsumerScope
-        {
-            private readonly ConsumerScope _inner;
-            private readonly Action _preHook;
-            private readonly Action _postHook;
-
-            public ConsumerScopeDecoratorWithHooks(ConsumerScope inner, Action preHook = null, Action postHook = null)
-            {
-                _inner = inner;
-                _preHook = preHook;
-                _postHook = postHook;
-            }
-
-            public override async Task<MessageResult> GetNext(CancellationToken cancellationToken)
-            {
-                _preHook?.Invoke();
-                var result = await _inner.GetNext(cancellationToken);
-                _postHook?.Invoke();
-
-                return result;
-            }
-
-            public override void Dispose()
-            {
-                _inner.Dispose();
-            }
-        }
-        private class FailingConsumerScopeFactory : IConsumerScopeFactory
-        {
-            public ConsumerScope CreateConsumerScope()
-            {
-                throw new System.InvalidOperationException();
-            }
-        }
+        // private class FailingConsumerScopeFactory : IConsumerScopeFactory
+        // {
+        //     public ConsumerScope CreateConsumerScope()
+        //     {
+        //         throw new System.InvalidOperationException();
+        //     }
+        // }
     }
 }

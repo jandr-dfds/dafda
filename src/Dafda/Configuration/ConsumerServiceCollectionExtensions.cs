@@ -62,7 +62,7 @@ namespace Dafda.Configuration
             {
                 var consumer = new Consumer(
                     provider.GetRequiredService<ILogger<Consumer>>(),
-                    configuration.ConsumerScopeFactory(provider),
+                    () => configuration.ConsumerScopeFactory(provider),
                     provider.GetRequiredService<IServiceScopeFactory>(),
                     configuration.MiddlewareBuilder,
                     configuration.EnableAutoCommit

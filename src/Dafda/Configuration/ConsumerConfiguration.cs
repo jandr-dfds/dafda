@@ -9,7 +9,7 @@ namespace Dafda.Configuration
         public ConsumerConfiguration(
             Configuration configuration,
             MessageHandlerRegistry messageHandlerRegistry,
-            Func<IServiceProvider, IConsumerScopeFactory> consumerScopeFactory,
+            Func<IServiceProvider, ConsumerScope> consumerScopeFactory,
             MiddlewareBuilder<IncomingRawMessageContext> middlewareBuilder,
             ConsumerErrorHandler consumerErrorHandler)
         {
@@ -22,7 +22,7 @@ namespace Dafda.Configuration
 
         public Configuration KafkaConfiguration { get; }
         public MessageHandlerRegistry MessageHandlerRegistry { get; }
-        public Func<IServiceProvider, IConsumerScopeFactory> ConsumerScopeFactory { get; }
+        public Func<IServiceProvider, ConsumerScope> ConsumerScopeFactory { get; }
         public MiddlewareBuilder<IncomingRawMessageContext> MiddlewareBuilder { get; }
         public ConsumerErrorHandler ConsumerErrorHandler { get; }
 

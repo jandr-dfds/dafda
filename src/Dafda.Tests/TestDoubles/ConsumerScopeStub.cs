@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Dafda.Consuming;
 
@@ -6,21 +7,16 @@ namespace Dafda.Tests.TestDoubles
 {
     internal class ConsumerScopeStub : ConsumerScope
     {
-        private readonly MessageResult _result;
+        private readonly MessageResult _messageResult;
 
-        public ConsumerScopeStub(MessageResult result)
+        public ConsumerScopeStub(MessageResult messageResult)
         {
-            _result = result;
+            _messageResult = messageResult;
         }
 
-        public override Task<MessageResult> GetNext(CancellationToken cancellationToken)
+        public override Task Consume(Func<MessageResult, Task> onMessageCallback, CancellationToken cancellationToken)
         {
-            return Task.FromResult(_result);
-        }
-
-        public override void Dispose()
-        {
-            
+            return onMessageCallback.Invoke(_messageResult);
         }
     }
 }

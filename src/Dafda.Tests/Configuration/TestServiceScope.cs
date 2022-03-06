@@ -31,10 +31,8 @@ namespace Dafda.Tests.Configuration
 
             var serviceProvider = services.BuildServiceProvider();
 
-            var consumerScope = new ConsumerScopeStub(new MessageResultBuilder().Build());
-
             var consumer = new ConsumerBuilder()
-                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
+                .WithConsumerScope(new ConsumerScopeStub(new MessageResultBuilder().Build()))
                 .WithEnableAutoCommit(consumerConfiguration.EnableAutoCommit)
                 .WithMiddleware(consumerConfiguration.MiddlewareBuilder)
                 .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
@@ -66,10 +64,8 @@ namespace Dafda.Tests.Configuration
 
             var serviceProvider = services.BuildServiceProvider();
 
-            var consumerScope = new ConsumerScopeStub(new MessageResultBuilder().Build());
-
             var consumer = new ConsumerBuilder()
-                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
+                .WithConsumerScope(new ConsumerScopeStub(new MessageResultBuilder().Build()))
                 .WithEnableAutoCommit(consumerConfiguration.EnableAutoCommit)
                 .WithMiddleware(consumerConfiguration.MiddlewareBuilder)
                 .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
@@ -101,10 +97,8 @@ namespace Dafda.Tests.Configuration
 
             var serviceProvider = services.BuildServiceProvider();
 
-            var consumerScope = new ConsumerScopeStub(new MessageResultBuilder().Build());
-
             var consumer = new ConsumerBuilder()
-                .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
+                .WithConsumerScope(new ConsumerScopeStub(new MessageResultBuilder().Build()))
                 .WithEnableAutoCommit(consumerConfiguration.EnableAutoCommit)
                 .WithMiddleware(consumerConfiguration.MiddlewareBuilder)
                 .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
