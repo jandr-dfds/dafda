@@ -29,13 +29,13 @@ namespace Dafda.Consuming
             _isAutoCommitEnabled = isAutoCommitEnabled;
         }
 
-        public async Task Consume(CancellationToken cancellationToken)
+        public async Task Consume(Cancelable cancelable)
         {
             using (var consumerScope = _consumerScopeFactory.CreateConsumerScope())
             {
-                while (!cancellationToken.IsCancellationRequested)
+                while (!cancelable.IsCancelled)
                 {
-                    await ProcessNextMessage(consumerScope, cancellationToken);
+                    await ProcessNextMessage(consumerScope, cancelable.Token);
                 }
             }
         }

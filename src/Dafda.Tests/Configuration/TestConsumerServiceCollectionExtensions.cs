@@ -19,13 +19,12 @@ namespace Dafda.Tests.Configuration
         public async Task Can_consume_messages()
         {
             var loops = 0;
-            var consumerScope = new CancellingConsumerScope(new MessageResultBuilder()
-                .WithRawMessage(new RawMessageBuilder())
-                .Build(), 2);
 
             var consumer = new ConsumerBuilder()
                 .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(new ConsumerScopeDecoratorWithHooks(
-                    inner: consumerScope,
+                    inner: new ConsumerScopeStub(new MessageResultBuilder()
+                        .WithRawMessage(new RawMessageBuilder())
+                        .Build()),
                     postHook: () => { loops++; }
                 )))
                 .Build();
@@ -38,7 +37,7 @@ namespace Dafda.Tests.Configuration
                 ConsumerErrorHandler.Default
             );
 
-            await consumerHostedService.ConsumeAll(consumerScope.Token);
+            await consumerHostedService.ConsumeAll(Consume.Twice);
 
             Assert.Equal(2, loops);
         }
@@ -132,7 +131,7 @@ namespace Dafda.Tests.Configuration
                 .OfType<ConsumerHostedService>()
                 .Single();
 
-            await consumerHostedService.ConsumeLoop(CancellationToken.None);
+            await consumerHostedService.ConsumeLoop(Consume.Once);
 
             Assert.True(spy.StopApplicationWasCalled);
         }
@@ -168,7 +167,7 @@ namespace Dafda.Tests.Configuration
                 .OfType<ConsumerHostedService>()
                 .Single();
 
-            await consumerHostedService.ConsumeLoop(CancellationToken.None);
+            await consumerHostedService.ConsumeLoop(Consume.Once);
 
             Assert.Equal(failuresBeforeQuitting + 1, count);
         }

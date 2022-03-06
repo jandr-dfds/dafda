@@ -31,7 +31,7 @@ namespace Dafda.Tests.Configuration
 
             var serviceProvider = services.BuildServiceProvider();
 
-            var consumerScope = new CancellingConsumerScope(new MessageResultBuilder().Build(), 2);
+            var consumerScope = new ConsumerScopeStub(new MessageResultBuilder().Build());
 
             var consumer = new ConsumerBuilder()
                 .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
@@ -40,7 +40,7 @@ namespace Dafda.Tests.Configuration
                 .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
                 .Build();
 
-            await consumer.Consume(consumerScope.Token);
+            await consumer.Consume(Consume.Twice);
 
             Assert.Equal(4, createCount);
             Assert.Equal(4, disposeCount);
@@ -66,7 +66,7 @@ namespace Dafda.Tests.Configuration
 
             var serviceProvider = services.BuildServiceProvider();
 
-            var consumerScope = new CancellingConsumerScope(new MessageResultBuilder().Build(), 2);
+            var consumerScope = new ConsumerScopeStub(new MessageResultBuilder().Build());
 
             var consumer = new ConsumerBuilder()
                 .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
@@ -75,7 +75,7 @@ namespace Dafda.Tests.Configuration
                 .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
                 .Build();
 
-            await consumer.Consume(consumerScope.Token);
+            await consumer.Consume(Consume.Twice);
 
             Assert.Equal(1, createCount);
             Assert.Equal(0, disposeCount);
@@ -101,7 +101,7 @@ namespace Dafda.Tests.Configuration
 
             var serviceProvider = services.BuildServiceProvider();
 
-            var consumerScope = new CancellingConsumerScope(new MessageResultBuilder().Build(), 2);
+            var consumerScope = new ConsumerScopeStub(new MessageResultBuilder().Build());
 
             var consumer = new ConsumerBuilder()
                 .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
@@ -110,7 +110,7 @@ namespace Dafda.Tests.Configuration
                 .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
                 .Build();
 
-            await consumer.Consume(consumerScope.Token);
+            await consumer.Consume(Consume.Twice);
 
             Assert.Equal(2, createCount);
             Assert.Equal(2, disposeCount);

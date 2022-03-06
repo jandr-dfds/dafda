@@ -3,10 +3,9 @@ using System.Threading.Tasks;
 using Dafda.Consuming;
 using Dafda.Middleware;
 using Dafda.Tests.Builders;
+using Dafda.Tests.Configuration;
 using Dafda.Tests.TestDoubles;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Moq;
 using Xunit;
 
 namespace Dafda.Tests.Consuming
@@ -27,19 +26,19 @@ namespace Dafda.Tests.Consuming
             var middlewareBuilder = new MiddlewareBuilder<IncomingRawMessageContext>(services);
             middlewareBuilder
                 .Register(_ => new DeserializationMiddleware(DeserializerStub.Returns(new FooMessage())))
-                .Register(_ => new MessageHandlerMiddleware(registry, type => handlerStub))
+                .Register(_ => new MessageHandlerMiddleware(registry, _ => handlerStub))
                 .Register(_ => new InvocationMiddleware())
                 ;
 
             var serviceProvider = services.BuildServiceProvider();
-            var consumerScope = new CancellingConsumerScope(new MessageResultBuilder().Build());
+            var consumerScope = new ConsumerScopeStub(new MessageResultBuilder().Build());
             var sut = new ConsumerBuilder()
                 .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
                 .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
                 .WithMiddleware(middlewareBuilder)
                 .Build();
 
-            await sut.Consume(consumerScope.Token);
+            await sut.Consume(Consume.Once);
 
             Assert.True(wasCalled);
         }
@@ -53,12 +52,12 @@ namespace Dafda.Tests.Consuming
             var middlewareBuilder = new MiddlewareBuilder<IncomingRawMessageContext>(services);
             middlewareBuilder
                 .Register(_ => new DeserializationMiddleware(DeserializerStub.Returns(new FooMessage())))
-                .Register(_ => new MessageHandlerMiddleware(registry, type => null))
+                .Register(_ => new MessageHandlerMiddleware(registry, _ => null))
                 .Register(_ => new InvocationMiddleware())
                 ;
 
             var serviceProvider = services.BuildServiceProvider();
-            var consumerScope = new CancellingConsumerScope(new MessageResultBuilder().Build());
+            var consumerScope = new ConsumerScopeStub(new MessageResultBuilder().Build());
             var sut = new ConsumerBuilder()
                 .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(consumerScope))
                 .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
@@ -66,7 +65,7 @@ namespace Dafda.Tests.Consuming
                 .Build();
 
             await Assert.ThrowsAsync<MissingMessageHandlerRegistrationException>(
-                () => sut.Consume(consumerScope.Token));
+                () => sut.Consume(Consume.Once));
         }
 
         // [Fact]
@@ -103,7 +102,7 @@ namespace Dafda.Tests.Consuming
                 })
                 .Build();
 
-            var consumerScope = new CancellingConsumerScope(resultSpy);
+            var consumerScope = new ConsumerScopeStub(resultSpy);
             var registry = new MessageHandlerRegistry();
             registry.Register(messageRegistrationStub);
 
@@ -112,7 +111,7 @@ namespace Dafda.Tests.Consuming
                 .WithEnableAutoCommit(true)
                 .Build();
 
-            await consumer.Consume(consumerScope.Token);
+            await consumer.Consume(Consume.Once);
 
             Assert.False(wasCalled);
         }
@@ -138,7 +137,7 @@ namespace Dafda.Tests.Consuming
                 })
                 .Build();
 
-            var consumerScope = new CancellingConsumerScope(resultSpy);
+            var consumerScope = new ConsumerScopeStub(resultSpy);
             var registry = new MessageHandlerRegistry();
             registry.Register(messageRegistrationStub);
 
@@ -147,7 +146,7 @@ namespace Dafda.Tests.Consuming
                 .WithEnableAutoCommit(false)
                 .Build();
 
-            await consumer.Consume(consumerScope.Token);
+            await consumer.Consume(Consume.Once);
 
             Assert.True(wasCalled);
         }
@@ -164,7 +163,7 @@ namespace Dafda.Tests.Consuming
                 .WithMessageType("foo")
                 .Build();
 
-            var consumerScope = new CancellingConsumerScope(messageResultStub);
+            var consumerScope = new ConsumerScopeStub(messageResultStub);
             var spy = new ConsumerScopeFactorySpy(consumerScope);
 
             var registry = new MessageHandlerRegistry();
@@ -174,7 +173,7 @@ namespace Dafda.Tests.Consuming
                 .WithConsumerScopeFactory(spy)
                 .Build();
 
-            await consumer.Consume(consumerScope.Token);
+            await consumer.Consume(Consume.Once);
 
             Assert.Equal(1, spy.CreateConsumerScopeCalled);
         }
@@ -191,7 +190,7 @@ namespace Dafda.Tests.Consuming
                 .WithMessageType("foo")
                 .Build();
 
-            var spy = new CancellingConsumerScope(messageResultStub);
+            var spy = new ConsumerScopeSpy(messageResultStub);
 
             var registry = new MessageHandlerRegistry();
             registry.Register(messageRegistrationStub);
@@ -200,7 +199,7 @@ namespace Dafda.Tests.Consuming
                 .WithConsumerScopeFactory(new ConsumerScopeFactoryStub(spy))
                 .Build();
 
-            await consumer.Consume(spy.Token);
+            await consumer.Consume(Consume.Once);
 
             Assert.Equal(1, spy.Disposed);
         }
