@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace Dafda.Configuration
@@ -128,30 +127,6 @@ namespace Dafda.Configuration
                     var message = "Invalid configuration:" + Environment.NewLine + _configurationReporter.Report();
                     throw new InvalidConfigurationException(message);
                 }
-            }
-        }
-    }
-
-    internal class Configuration : ReadOnlyDictionary<string, string>
-    {
-        public Configuration(IDictionary<string, string> dictionary) : base(dictionary)
-        {
-        }
-
-        public string GroupId => this[ConfigurationKeys.GroupId];
-
-        public bool EnableAutoCommit
-        {
-            get
-            {
-                const bool defaultAutoCommitStrategy = true;
-
-                if (!TryGetValue(ConfigurationKeys.EnableAutoCommit, out var value))
-                {
-                    return defaultAutoCommitStrategy;
-                }
-
-                return bool.Parse(value);
             }
         }
     }
