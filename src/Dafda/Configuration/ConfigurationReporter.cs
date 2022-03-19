@@ -11,23 +11,7 @@ namespace Dafda.Configuration
 
         private readonly IList<Item> _items = new List<Item>();
 
-        private class Item
-        {
-            public Item(string key, string source, string value, string keys, bool required = false)
-            {
-                Key = key;
-                Source = source;
-                Value = value;
-                Keys = keys;
-                Required = required;
-            }
-
-            public string Key { get; }
-            public string Source { get; }
-            public string Value { get; }
-            public string Keys { get; }
-            public bool Required { get; }
-        }
+        private record Item(string Key, string Source, string Value, string Keys, bool Required = false);
 
         protected ConfigurationReporter()
         {
@@ -45,7 +29,7 @@ namespace Dafda.Configuration
 
         public virtual void AddManual(string key, string value)
         {
-            _items.Add(new Item(key, "MANUAL", value, "", false));
+            _items.Add(new Item(key, "MANUAL", value, ""));
         }
 
         public virtual string Report()
