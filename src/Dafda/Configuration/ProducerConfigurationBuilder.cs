@@ -9,23 +9,6 @@ namespace Dafda.Configuration
 {
     internal sealed class ProducerConfigurationBuilder
     {
-        private static readonly string[] DefaultConfigurationKeys =
-        {
-            ConfigurationKey.BootstrapServers,
-            ConfigurationKey.BrokerVersionFallback,
-            ConfigurationKey.ApiVersionFallbackMs,
-            ConfigurationKey.SslCaLocation,
-            ConfigurationKey.SaslUsername,
-            ConfigurationKey.SaslPassword,
-            ConfigurationKey.SaslMechanisms,
-            ConfigurationKey.SecurityProtocol,
-        };
-
-        private static readonly string[] RequiredConfigurationKeys =
-        {
-            ConfigurationKey.BootstrapServers
-        };
-
         private readonly IDictionary<string, string> _configurations = new Dictionary<string, string>();
         private readonly IList<NamingConvention> _namingConventions = new List<NamingConvention>();
 
@@ -72,7 +55,7 @@ namespace Dafda.Configuration
 
         public ProducerConfigurationBuilder WithBootstrapServers(string bootstrapServers)
         {
-            return WithConfiguration(ConfigurationKey.BootstrapServers, bootstrapServers);
+            return WithConfiguration(ConfigurationKeys.BootstrapServers, bootstrapServers);
         }
 
         public ProducerConfigurationBuilder WithMessageIdGenerator(MessageIdGenerator messageIdGenerator)
@@ -101,9 +84,7 @@ namespace Dafda.Configuration
         
         internal ProducerConfiguration Build()
         {
-            var configurations = new ConfigurationBuilder()
-                .WithConfigurationKeys(DefaultConfigurationKeys)
-                .WithRequiredConfigurationKeys(RequiredConfigurationKeys)
+            var configurations = new ConfigurationBuilder(ConfigurationKeys.Producer)
                 .WithNamingConventions(_namingConventions.ToArray())
                 .WithConfigurationSource(_configurationSource)
                 .WithConfigurations(_configurations)

@@ -23,7 +23,7 @@ namespace Dafda.Tests.Configuration
                 .WithBootstrapServers("foo")
                 .Build();
 
-            AssertKeyValue(configuration, ConfigurationKey.BootstrapServers, "foo");
+            AssertKeyValue(configuration, ConfigurationKeys.BootstrapServers, "foo");
         }
 
         private static void AssertKeyValue(ProducerConfiguration configuration, string expectedKey, string expectedValue)
@@ -38,21 +38,21 @@ namespace Dafda.Tests.Configuration
         {
             var configuration = new ProducerConfigurationBuilder()
                 .WithConfigurationSource(new ConfigurationSourceStub(
-                    (key: ConfigurationKey.BootstrapServers, value: "foo"),
-                    (key: ConfigurationKey.SaslUsername, value: "username"),
-                    (key: ConfigurationKey.SaslMechanisms, value: "foo"),
+                    (key: ConfigurationKeys.BootstrapServers, value: "foo"),
+                    (key: ConfigurationKeys.SaslUsername, value: "username"),
+                    (key: ConfigurationKeys.SaslMechanisms, value: "foo"),
                     (key: "DEFAULT_KAFKA_SASL_MECHANISMS", value: "default"),
                     (key: "SAMPLE_KAFKA_SASL_MECHANISMS", value: "sample"),
                     (key: "dummy", value: "ignored")
                 ))
                 .WithEnvironmentStyle("DEFAULT_KAFKA", "SAMPLE_KAFKA")
                 .WithNamingConvention(NamingConvention.Default)
-                .WithConfiguration(ConfigurationKey.BootstrapServers, "bar")
+                .WithConfiguration(ConfigurationKeys.BootstrapServers, "bar")
                 .Build();
 
-            AssertKeyValue(configuration, ConfigurationKey.BootstrapServers, "bar");
-            AssertKeyValue(configuration, ConfigurationKey.SaslUsername, "username");
-            AssertKeyValue(configuration, ConfigurationKey.SaslMechanisms, "default");
+            AssertKeyValue(configuration, ConfigurationKeys.BootstrapServers, "bar");
+            AssertKeyValue(configuration, ConfigurationKeys.SaslUsername, "username");
+            AssertKeyValue(configuration, ConfigurationKeys.SaslMechanisms, "default");
             AssertKeyValue(configuration, "dummy", null);
         }
 

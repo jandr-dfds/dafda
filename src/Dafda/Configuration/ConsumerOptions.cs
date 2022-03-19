@@ -113,7 +113,7 @@ namespace Dafda.Configuration
         /// <param name="groupId">The group id for the consumer.</param>
         public void WithGroupId(string groupId)
         {
-            WithConfiguration(ConfigurationKey.GroupId, groupId);
+            WithConfiguration(ConfigurationKeys.GroupId, groupId);
         }
 
         /// <summary>
@@ -122,7 +122,7 @@ namespace Dafda.Configuration
         /// <param name="bootstrapServers">A list of bootstrap servers.</param>
         public void WithBootstrapServers(string bootstrapServers)
         {
-            WithConfiguration(ConfigurationKey.BootstrapServers, bootstrapServers);
+            WithConfiguration(ConfigurationKeys.BootstrapServers, bootstrapServers);
         }
 
         /// <summary>

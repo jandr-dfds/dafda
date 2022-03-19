@@ -27,8 +27,8 @@ namespace Dafda.Tests.Configuration
             sut.WithBootstrapServers("bar");
             var configuration = sut.Build();
 
-            AssertKeyValue(configuration.KafkaConfiguration, ConfigurationKey.GroupId, "foo");
-            AssertKeyValue(configuration.KafkaConfiguration, ConfigurationKey.BootstrapServers, "bar");
+            AssertKeyValue(configuration.KafkaConfiguration, ConfigurationKeys.GroupId, "foo");
+            AssertKeyValue(configuration.KafkaConfiguration, ConfigurationKeys.BootstrapServers, "bar");
         }
 
         private static void AssertKeyValue(IDictionary<string, string> configuration, string expectedKey, string expectedValue)
@@ -46,19 +46,19 @@ namespace Dafda.Tests.Configuration
                 (key: "DEFAULT_KAFKA_GROUP_ID", value: "default_foo"),
                 (key: "SAMPLE_KAFKA_ENABLE_AUTO_COMMIT", value: "true"),
                 (key: "SAMPLE_KAFKA_ALLOW_AUTO_CREATE_TOPICS", value: "false"),
-                (key: ConfigurationKey.GroupId, value: "foo"),
-                (key: ConfigurationKey.BootstrapServers, value: "bar"),
+                (key: ConfigurationKeys.GroupId, value: "foo"),
+                (key: ConfigurationKeys.BootstrapServers, value: "bar"),
                 (key: "dummy", value: "ignored")
             ));
             sut.WithNamingConvention(NamingConvention.Default);
             sut.WithEnvironmentStyle("DEFAULT_KAFKA", "SAMPLE_KAFKA");
-            sut.WithConfiguration(ConfigurationKey.GroupId, "baz");
+            sut.WithConfiguration(ConfigurationKeys.GroupId, "baz");
             var configuration = sut.Build();
 
-            AssertKeyValue(configuration.KafkaConfiguration, ConfigurationKey.GroupId, "baz");
-            AssertKeyValue(configuration.KafkaConfiguration, ConfigurationKey.BootstrapServers, "bar");
-            AssertKeyValue(configuration.KafkaConfiguration, ConfigurationKey.EnableAutoCommit, "true");
-            AssertKeyValue(configuration.KafkaConfiguration, ConfigurationKey.AllowAutoCreateTopics, "false");
+            AssertKeyValue(configuration.KafkaConfiguration, ConfigurationKeys.GroupId, "baz");
+            AssertKeyValue(configuration.KafkaConfiguration, ConfigurationKeys.BootstrapServers, "bar");
+            AssertKeyValue(configuration.KafkaConfiguration, ConfigurationKeys.EnableAutoCommit, "true");
+            AssertKeyValue(configuration.KafkaConfiguration, ConfigurationKeys.AllowAutoCreateTopics, "false");
             AssertKeyValue(configuration.KafkaConfiguration, "dummy", null);
         }
 
@@ -97,7 +97,7 @@ namespace Dafda.Tests.Configuration
             var sut = new ConsumerOptions(new ServiceCollection());
             sut.WithGroupId("foo");
             sut.WithBootstrapServers("bar");
-            sut.WithConfiguration(ConfigurationKey.EnableAutoCommit, configValue);
+            sut.WithConfiguration(ConfigurationKeys.EnableAutoCommit, configValue);
             var configuration = sut.Build();
             ;
 
