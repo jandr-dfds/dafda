@@ -48,19 +48,19 @@ namespace Dafda.Configuration
         };
 
         private readonly List<KeyWrapper> _keys = new();
+        private readonly HashSet<string> _uniqueKeys = new();
 
         public string[] Required => _keys.Where(x => x.Required).Select(x => x.Key).ToArray();
-
-        public IEnumerable<string> All => _keys.Select(x => x.Key).Distinct();
 
         public void Add(string key, bool required = false)
         {
             _keys.Add(new KeyWrapper(key, required));
+            _uniqueKeys.Add(key);
         }
 
         public IEnumerator<string> GetEnumerator()
         {
-            return All.GetEnumerator();
+            return _uniqueKeys.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()

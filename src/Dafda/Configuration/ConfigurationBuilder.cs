@@ -69,7 +69,7 @@ namespace Dafda.Configuration
                 _configurationReporter.AddManual(configuration.Key, configuration.Value);
             }
 
-            foreach (var key in AllKeys)
+            foreach (var key in _configurationKeys)
             {
                 if (configurations.ContainsKey(key))
                 {
@@ -85,10 +85,6 @@ namespace Dafda.Configuration
 
             return configurations;
         }
-
-        private string[] RequiredConfigurationKeys => _configurationKeys.Required;
-
-        private IEnumerable<string> AllKeys => _configurationKeys.All;
 
         private string GetByKey(string key)
         {
@@ -120,7 +116,7 @@ namespace Dafda.Configuration
 
         private void ValidateConfiguration(IDictionary<string, string> configurations)
         {
-            foreach (var key in RequiredConfigurationKeys)
+            foreach (var key in _configurationKeys.Required)
             {
                 if (!configurations.TryGetValue(key, out var value) || string.IsNullOrEmpty(value))
                 {

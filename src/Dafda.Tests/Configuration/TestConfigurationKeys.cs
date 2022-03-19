@@ -37,7 +37,7 @@ namespace Dafda.Tests.Configuration
                 ConfigurationKeys.SaslPassword,
                 ConfigurationKeys.SaslMechanisms,
                 ConfigurationKeys.SecurityProtocol
-            }, ConfigurationKeys.Consumer.All);
+            }, ConfigurationKeys.Consumer);
         }
 
         [Fact]
@@ -63,7 +63,7 @@ namespace Dafda.Tests.Configuration
                 ConfigurationKeys.SaslPassword,
                 ConfigurationKeys.SaslMechanisms,
                 ConfigurationKeys.SecurityProtocol
-            }, ConfigurationKeys.Producer.All);
+            }, ConfigurationKeys.Producer);
         }
 
         [Fact]
