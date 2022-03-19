@@ -84,7 +84,8 @@ namespace Dafda.Configuration
         
         internal ProducerConfiguration Build()
         {
-            var configurations = new ConfigurationBuilder(ConfigurationKeys.Producer)
+            var configurations = ConfigurationBuilder
+                .ForProducer
                 .WithNamingConventions(_namingConventions.ToArray())
                 .WithConfigurationSource(_configurationSource)
                 .WithConfigurations(_configurations)

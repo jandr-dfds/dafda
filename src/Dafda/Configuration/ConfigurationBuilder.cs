@@ -10,6 +10,7 @@ namespace Dafda.Configuration
         private static readonly IDictionary<string, string> Empty = new Dictionary<string, string>();
 
         public static ConfigurationBuilder ForConsumer => new ConfigurationBuilder(ConfigurationKeys.Consumer);
+        public static ConfigurationBuilder ForProducer => new ConfigurationBuilder(ConfigurationKeys.Producer);
 
         private ConfigurationKeys ConfigurationKeys { get; } = ConfigurationKeys;
         private NamingConvention[] NamingConventions { get; init; } = DefaultNamingConventions;
