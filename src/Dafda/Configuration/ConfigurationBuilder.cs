@@ -4,50 +4,37 @@ using System.Linq;
 
 namespace Dafda.Configuration
 {
-    internal class ConfigurationBuilder
+    internal record ConfigurationBuilder(ConfigurationKeys ConfigurationKeys)
     {
         private static readonly NamingConvention[] DefaultNamingConventions = { NamingConvention.Default };
+        private static readonly IDictionary<string, string> Empty = new Dictionary<string, string>();
 
         public static ConfigurationBuilder ForConsumer => new ConfigurationBuilder(ConfigurationKeys.Consumer);
 
-        private readonly ConfigurationKeys _configurationKeys;
-        private readonly NamingConvention[] _namingConventions;
-        private readonly ConfigurationSource _configurationSource;
-        private readonly IDictionary<string, string> _configurations;
-        private readonly ConfigurationReporter _configurationReporter;
-
-        public ConfigurationBuilder(ConfigurationKeys configurationKeys)
-            : this(configurationKeys, DefaultNamingConventions, ConfigurationSource.Null, new Dictionary<string, string>(), ConfigurationReporter.CreateDefault())
-        {
-        }
-
-        private ConfigurationBuilder(ConfigurationKeys configurationKeys, NamingConvention[] namingConventions, ConfigurationSource configurationSource, IDictionary<string, string> configurations, ConfigurationReporter configurationReporter)
-        {
-            _configurationKeys = configurationKeys;
-            _namingConventions = namingConventions.Length == 0 ? DefaultNamingConventions : namingConventions;
-            _configurationSource = configurationSource;
-            _configurations = configurations;
-            _configurationReporter = configurationReporter;
-        }
+        private ConfigurationKeys ConfigurationKeys { get; } = ConfigurationKeys;
+        private NamingConvention[] NamingConventions { get; init; } = DefaultNamingConventions;
+        private ConfigurationSource ConfigurationSource { get; init; } = ConfigurationSource.Null;
+        private IDictionary<string, string> Configurations { get; init; } = Empty;
+        private ConfigurationReporter ConfigurationReporter { get; init; } = ConfigurationReporter.CreateDefault();
 
         public ConfigurationBuilder WithNamingConventions(params NamingConvention[] namingConventions)
         {
-            return new ConfigurationBuilder(_configurationKeys, namingConventions, _configurationSource, _configurations, _configurationReporter);
+            return this with { NamingConventions = namingConventions };
         }
 
         public ConfigurationBuilder WithConfigurationSource(ConfigurationSource configurationSource)
         {
-            return new ConfigurationBuilder(_configurationKeys, _namingConventions, configurationSource, _configurations, _configurationReporter);
+            return this with { ConfigurationSource = configurationSource };
         }
 
         public ConfigurationBuilder WithConfigurations(IDictionary<string, string> configurations)
         {
-            return new ConfigurationBuilder(_configurationKeys, _namingConventions, _configurationSource, configurations, _configurationReporter);
+            return this with { Configurations = new Dictionary<string, string>(configurations) };
         }
 
         public ConfigurationBuilder WithConfigurationReporter(ConfigurationReporter configurationReporter)
         {
-            return new ConfigurationBuilder(_configurationKeys, _namingConventions, _configurationSource, _configurations, configurationReporter);
+            return this with { ConfigurationReporter = configurationReporter };
         }
 
         public Configuration Build()
@@ -63,13 +50,13 @@ namespace Dafda.Configuration
         {
             var configurations = new Dictionary<string, string>();
 
-            foreach (var configuration in _configurations)
+            foreach (var configuration in Configurations)
             {
                 configurations[configuration.Key] = configuration.Value;
-                _configurationReporter.AddManual(configuration.Key, configuration.Value);
+                ConfigurationReporter.AddManual(configuration.Key, configuration.Value);
             }
 
-            foreach (var key in _configurationKeys)
+            foreach (var key in ConfigurationKeys)
             {
                 if (configurations.ContainsKey(key))
                 {
@@ -88,39 +75,39 @@ namespace Dafda.Configuration
 
         private string GetByKey(string key)
         {
-            foreach (var namingConvention in _namingConventions)
+            foreach (var namingConvention in NamingConventions)
             {
                 var attemptedKey = namingConvention.GetKey(key);
-                var value = _configurationSource.GetByKey(attemptedKey);
+                var value = ConfigurationSource.GetByKey(attemptedKey);
                 if (value != null)
                 {
-                    _configurationReporter.AddValue(key, GetSourceName(), value, attemptedKey);
+                    ConfigurationReporter.AddValue(key, GetSourceName(), value, attemptedKey);
                     return value;
                 }
             }
 
-            _configurationReporter.AddMissing(key, GetSourceName(), GetAttemptedKeys(key));
+            ConfigurationReporter.AddMissing(key, GetSourceName(), GetAttemptedKeys(key));
 
             return null;
         }
 
         private string GetSourceName()
         {
-            return _configurationSource.GetType().Name;
+            return ConfigurationSource.GetType().Name;
         }
 
         private string[] GetAttemptedKeys(string key)
         {
-            return _namingConventions.Select(convention => convention.GetKey(key)).ToArray();
+            return NamingConventions.Select(convention => convention.GetKey(key)).ToArray();
         }
 
         private void ValidateConfiguration(IDictionary<string, string> configurations)
         {
-            foreach (var key in _configurationKeys.Required)
+            foreach (var key in ConfigurationKeys.Required)
             {
                 if (!configurations.TryGetValue(key, out var value) || string.IsNullOrEmpty(value))
                 {
-                    var message = "Invalid configuration:" + Environment.NewLine + _configurationReporter.Report();
+                    var message = "Invalid configuration:" + Environment.NewLine + ConfigurationReporter.Report();
                     throw new InvalidConfigurationException(message);
                 }
             }
