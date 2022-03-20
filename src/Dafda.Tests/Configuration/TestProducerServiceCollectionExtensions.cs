@@ -20,9 +20,9 @@ namespace Dafda.Tests.Configuration
             });
 
             var provider = services.BuildServiceProvider();
-            var producerFactory = provider.GetService<ProducerFactory>();
+            var producerRegistry = provider.GetService<ProducerRegistry>();
 
-            Assert.NotNull(producerFactory);
+            Assert.NotNull(producerRegistry);
         }
 
         [Fact]
@@ -70,7 +70,7 @@ namespace Dafda.Tests.Configuration
             Assert.NotNull(messageSender.ADependency);
             
             Assert.Equal("hello one", messageSender.ADependency.Message);
-            Assert.Equal(ProducerFactory.GetKeyNameOf<MessageSenderOne>(), messageSender.Producer.Name);
+            Assert.Equal(ProducerRegistry.GetKeyNameOf<MessageSenderOne>(), messageSender.Producer.Name);
         }
 
         [Fact]
@@ -88,7 +88,7 @@ namespace Dafda.Tests.Configuration
 
             Assert.NotNull(messageSender);
             Assert.NotNull(messageSender.Producer);
-            Assert.Equal(ProducerFactory.GetKeyNameOf<MessageSenderOne>(), messageSender.Producer.Name);
+            Assert.Equal(ProducerRegistry.GetKeyNameOf<MessageSenderOne>(), messageSender.Producer.Name);
         }
 
         [Fact]
@@ -118,7 +118,7 @@ namespace Dafda.Tests.Configuration
             Assert.NotNull(messageSenderOne.ADependency);
             
             Assert.Equal("hello one", messageSenderOne.ADependency.Message);
-            Assert.Equal(ProducerFactory.GetKeyNameOf<MessageSenderOne>(), messageSenderOne.Producer.Name);
+            Assert.Equal(ProducerRegistry.GetKeyNameOf<MessageSenderOne>(), messageSenderOne.Producer.Name);
 
             var messageSenderTwo = provider.GetRequiredService<MessageSenderTwo>();
             
@@ -127,7 +127,7 @@ namespace Dafda.Tests.Configuration
             Assert.NotNull(messageSenderTwo.ADependency);
             
             Assert.Equal("hello two", messageSenderTwo.ADependency.Message);
-            Assert.Equal(ProducerFactory.GetKeyNameOf<MessageSenderTwo>(), messageSenderTwo.Producer.Name);
+            Assert.Equal(ProducerRegistry.GetKeyNameOf<MessageSenderTwo>(), messageSenderTwo.Producer.Name);
             
             Assert.NotEqual(messageSenderOne.Producer.Name, messageSenderTwo.Producer.Name);
         }

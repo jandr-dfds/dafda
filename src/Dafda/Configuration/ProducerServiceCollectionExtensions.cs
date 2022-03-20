@@ -20,11 +20,11 @@ namespace Dafda.Configuration
             where TImplementation : class, TService
             where TService : class
         {
-            var factory = CreateProducerFactory<TImplementation>(services, options);
-            services.AddTransient<TService, TImplementation>(provider => CreateInstance<TImplementation>(provider, factory));
+            var registry = RegisterProducer<TImplementation>(services, options);
+            services.AddTransient<TService, TImplementation>(provider => CreateInstance<TImplementation>(provider, registry));
         }
 
-        private static ProducerFactory CreateProducerFactory<TImplementation>(IServiceCollection services, Action<ProducerOptions> options)
+        private static ProducerRegistry RegisterProducer<TImplementation>(IServiceCollection services, Action<ProducerOptions> options)
         {
             var outgoingMessageRegistry = new OutgoingMessageRegistry();
             var consumerOptions = new ProducerOptions(outgoingMessageRegistry);
@@ -32,15 +32,15 @@ namespace Dafda.Configuration
 
             var producerConfiguration = consumerOptions.Build();
 
-            var factory = services.GetOrAddSingleton(() => new ProducerFactory());
-            factory.ConfigureProducerFor<TImplementation>(producerConfiguration, outgoingMessageRegistry);
-            return factory;
+            var registry = services.GetOrAddSingleton(() => new ProducerRegistry());
+            registry.ConfigureProducerFor<TImplementation>(producerConfiguration, outgoingMessageRegistry);
+            return registry;
         }
 
-        private static TImplementation CreateInstance<TImplementation>(IServiceProvider provider, ProducerFactory factory)
+        private static TImplementation CreateInstance<TImplementation>(IServiceProvider provider, ProducerRegistry registry)
         {
             var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
-            var producer = factory.GetFor<TImplementation>(loggerFactory);
+            var producer = registry.GetFor<TImplementation>(loggerFactory);
             return ActivatorUtilities.CreateInstance<TImplementation>(provider, producer);
         }
 
@@ -54,8 +54,8 @@ namespace Dafda.Configuration
         /// <param name="options">Use this action to override Dafda and underlying Kafka configuration.</param>
         public static void AddProducerFor<TClient>(this IServiceCollection services, Action<ProducerOptions> options) where TClient : class
         {
-            var factory = CreateProducerFactory<TClient>(services, options);
-            services.AddTransient(provider => CreateInstance<TClient>(provider, factory));
+            var registry = RegisterProducer<TClient>(services, options);
+            services.AddTransient(provider => CreateInstance<TClient>(provider, registry));
         }
     }
 }
