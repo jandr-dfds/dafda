@@ -9,22 +9,22 @@ namespace Dafda.Producing
     {
         private readonly Dictionary<string, ProducerFactory> _registrations = new();
 
-        internal void ConfigureProducerFor<TClient>(ProducerConfiguration configuration, OutgoingMessageRegistry outgoingMessageRegistry)
+        internal void ConfigureProducerFor<TClient>(ProducerConfiguration configuration)
         {
             var producerName = GetKeyNameOf<TClient>();
-            ConfigureProducer(producerName, configuration, outgoingMessageRegistry);
+            ConfigureProducer(producerName, configuration);
         }
 
         internal static string GetKeyNameOf<TClient>() => $"__INTERNAL__FOR_CLIENT__{typeof(TClient).FullName}";
 
-        internal void ConfigureProducer(string producerName, ProducerConfiguration configuration, OutgoingMessageRegistry outgoingMessageRegistry)
+        internal void ConfigureProducer(string producerName, ProducerConfiguration configuration)
         {
             if (_registrations.ContainsKey(producerName))
             {
                 throw new ProducerFactoryException($"A producer with the name \"{producerName}\" has already been configured. Producer names should be unique.");
             }
 
-            _registrations.Add(producerName, new ProducerFactory(producerName, configuration, outgoingMessageRegistry));
+            _registrations.Add(producerName, new ProducerFactory(producerName, configuration));
         }
 
         public Producer Get(string producerName, ILoggerFactory loggerFactory) 
@@ -60,12 +60,12 @@ namespace Dafda.Producing
 
             private KafkaProducer _kafkaProducer;
 
-            public ProducerFactory(string producerName, ProducerConfiguration configuration, OutgoingMessageRegistry messageRegistry)
+            public ProducerFactory(string producerName, ProducerConfiguration configuration)
             {
                 _producerName = producerName;
                 _kafkaProducerFactory = configuration.KafkaProducerFactory;
                 _messageIdGenerator = configuration.MessageIdGenerator;
-                _messageRegistry = messageRegistry;
+                _messageRegistry = configuration.OutgoingMessageRegistry;
             }
 
             public Producer Create(ILoggerFactory loggerFactory)

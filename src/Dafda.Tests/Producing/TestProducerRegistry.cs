@@ -21,13 +21,12 @@ namespace Dafda.Tests.Producing
         [Fact]
         public void returns_expected_when_getting_by_a_known_name()
         {
-            var options = new ProducerOptions(new OutgoingMessageRegistry());
+            var options = new ProducerOptions();
             options.WithBootstrapServers("dummy");
             var producerConfigurationStub = options.Build();
-            var outgoingMessageRegistryStub = new OutgoingMessageRegistry();
 
             var sut = new ProducerRegistryBuilder().Build();
-            sut.ConfigureProducer("foo", producerConfigurationStub, outgoingMessageRegistryStub);
+            sut.ConfigureProducer("foo", producerConfigurationStub);
 
             var result = sut.Get("foo", NullLoggerFactory.Instance);
 
@@ -38,13 +37,12 @@ namespace Dafda.Tests.Producing
         [Fact]
         public void returns_expected_when_getting_by_an_unknown_name()
         {
-            var options = new ProducerOptions(new OutgoingMessageRegistry());
+            var options = new ProducerOptions();
             options.WithBootstrapServers("dummy");
             var producerConfigurationStub = options.Build();
-            var outgoingMessageRegistryStub = new OutgoingMessageRegistry();
 
             var sut = new ProducerRegistryBuilder().Build();
-            sut.ConfigureProducer("foo", producerConfigurationStub, outgoingMessageRegistryStub);
+            sut.ConfigureProducer("foo", producerConfigurationStub);
 
             var result = sut.Get("bar", NullLoggerFactory.Instance);
 
@@ -56,20 +54,18 @@ namespace Dafda.Tests.Producing
         {
             var sut = new ProducerRegistryBuilder().Build();
 
-            var options = new ProducerOptions(new OutgoingMessageRegistry());
+            var options = new ProducerOptions();
             options.WithBootstrapServers("dummy");
             var producerConfiguration = options.Build();
             
             sut.ConfigureProducer(
                 producerName: "foo",
-                configuration: producerConfiguration,
-                outgoingMessageRegistry: new OutgoingMessageRegistry()
+                configuration: producerConfiguration
             );
 
             Assert.Throws<ProducerFactoryException>(() => sut.ConfigureProducer(
                 producerName: "foo",
-                configuration: producerConfiguration,
-                outgoingMessageRegistry: new OutgoingMessageRegistry()
+                configuration: producerConfiguration
             ));
         }
 
@@ -80,15 +76,14 @@ namespace Dafda.Tests.Producing
 
             using (var sut = new ProducerRegistryBuilder().Build())
             {
-                var options = new ProducerOptions(new OutgoingMessageRegistry());
+                var options = new ProducerOptions();
                 options.WithBootstrapServers("dummy");
                 options.WithKafkaProducerFactory(_ => spy);
                 var producerConfiguration = options.Build();
 
                 sut.ConfigureProducer(
                     producerName: "foo",
-                    configuration: producerConfiguration,
-                    outgoingMessageRegistry: new OutgoingMessageRegistry()
+                    configuration: producerConfiguration
                 );
 
                 sut.Get("foo", NullLoggerFactory.Instance);

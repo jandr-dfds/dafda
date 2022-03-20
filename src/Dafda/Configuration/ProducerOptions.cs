@@ -11,20 +11,18 @@ namespace Dafda.Configuration
     /// </summary>
     public sealed class ProducerOptions
     {
-        private readonly OutgoingMessageRegistry _outgoingMessageRegistry;
-
-        internal ProducerOptions(OutgoingMessageRegistry outgoingMessageRegistry)
-        {
-            _outgoingMessageRegistry = outgoingMessageRegistry;
-        }
-
         private readonly IDictionary<string, string> _configurations = new Dictionary<string, string>();
         private readonly NamingConventions _namingConventions = new();
+        private readonly OutgoingMessageRegistry _outgoingMessageRegistry = new();
+        private readonly TopicPayloadSerializerRegistry _topicPayloadSerializerRegistry = new(() => new DefaultPayloadSerializer());
 
         private ConfigurationSource _configurationSource = ConfigurationSource.Null;
         private MessageIdGenerator _messageIdGenerator = MessageIdGenerator.Default;
         private Func<ILoggerFactory, KafkaProducer> _kafkaProducerFactory;
-        private readonly TopicPayloadSerializerRegistry _topicPayloadSerializerRegistry = new TopicPayloadSerializerRegistry(() => new DefaultPayloadSerializer());
+
+        internal ProducerOptions()
+        {
+        }
 
         /// <summary>
         /// Specify a custom implementation of the <see cref="ConfigurationSource"/> to use. 
@@ -197,15 +195,13 @@ namespace Dafda.Configuration
                 .WithConfigurations(_configurations)
                 .Build();
 
-            if (_kafkaProducerFactory == null)
-            {
-                _kafkaProducerFactory = loggerFactory => new KafkaProducer(loggerFactory, configurations, _topicPayloadSerializerRegistry);
-            }
+            _kafkaProducerFactory ??= loggerFactory => new KafkaProducer(loggerFactory, configurations, _topicPayloadSerializerRegistry);
 
             return new ProducerConfiguration(
                 configurations,
                 _messageIdGenerator,
-                _kafkaProducerFactory
+                _kafkaProducerFactory,
+                _outgoingMessageRegistry
             );
         }
     }

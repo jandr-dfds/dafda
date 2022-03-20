@@ -26,14 +26,13 @@ namespace Dafda.Configuration
 
         private static ProducerRegistry RegisterProducer<TImplementation>(IServiceCollection services, Action<ProducerOptions> options)
         {
-            var outgoingMessageRegistry = new OutgoingMessageRegistry();
-            var consumerOptions = new ProducerOptions(outgoingMessageRegistry);
+            var consumerOptions = new ProducerOptions();
             options?.Invoke(consumerOptions);
 
             var producerConfiguration = consumerOptions.Build();
 
             var registry = services.GetOrAddSingleton(() => new ProducerRegistry());
-            registry.ConfigureProducerFor<TImplementation>(producerConfiguration, outgoingMessageRegistry);
+            registry.ConfigureProducerFor<TImplementation>(producerConfiguration);
             return registry;
         }
 
