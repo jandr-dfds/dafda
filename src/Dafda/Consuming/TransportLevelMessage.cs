@@ -5,6 +5,7 @@ namespace Dafda.Consuming
     /// <summary>
     /// The Dafda message representation.
     /// </summary>
+    [Obsolete("This will be removed in a future release")]
     public sealed class TransportLevelMessage
     {
         private readonly Func<Type, object> _deserializer;

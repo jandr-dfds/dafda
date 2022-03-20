@@ -5,6 +5,7 @@ namespace Dafda.Consuming
     /// <summary>
     /// A message that could not be deserialized
     /// </summary>
+    [Obsolete("This will be removed in a future release")]
     public class TransportLevelPoisonMessage
     {
         /// <summary>

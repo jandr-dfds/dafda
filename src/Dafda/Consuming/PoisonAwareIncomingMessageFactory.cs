@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Dafda.Consuming
 {
+    [Obsolete("This will be removed in a future release")]
     internal class PoisonAwareIncomingMessageFactory : IIncomingMessageFactory
     {
         private readonly ILogger<PoisonAwareIncomingMessageFactory> _logger;
