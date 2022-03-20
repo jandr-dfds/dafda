@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using Dafda.Middleware;
 using Dafda.Producing;
 using Dafda.Serializing;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Dafda.Configuration
@@ -19,9 +21,11 @@ namespace Dafda.Configuration
         private ConfigurationSource _configurationSource = ConfigurationSource.Null;
         private MessageIdGenerator _messageIdGenerator = MessageIdGenerator.Default;
         private Func<ILoggerFactory, KafkaProducer> _kafkaProducerFactory;
+        private readonly MiddlewareBuilder<OutgoingMessageContext> _middlewareBuilder;
 
-        internal ProducerOptions()
+        internal ProducerOptions(IServiceCollection services)
         {
+            _middlewareBuilder = new MiddlewareBuilder<OutgoingMessageContext>(services);
         }
 
         /// <summary>
@@ -201,7 +205,8 @@ namespace Dafda.Configuration
                 configurations,
                 _messageIdGenerator,
                 _kafkaProducerFactory,
-                _outgoingMessageRegistry
+                _outgoingMessageRegistry,
+                _middlewareBuilder
             );
         }
     }

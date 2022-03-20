@@ -2,6 +2,7 @@ using System.Linq;
 using Dafda.Configuration;
 using Dafda.Producing;
 using Dafda.Tests.TestDoubles;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Dafda.Tests.Configuration
@@ -11,7 +12,7 @@ namespace Dafda.Tests.Configuration
         [Fact]
         public void Can_validate_configuration()
         {
-            var sut = new ProducerOptions();
+            var sut = new ProducerOptions(new ServiceCollection());
 
             Assert.Throws<InvalidConfigurationException>(() => sut.Build());
         }
@@ -19,7 +20,7 @@ namespace Dafda.Tests.Configuration
         [Fact]
         public void Can_build_minimal_configuration()
         {
-            var sut = new ProducerOptions();
+            var sut = new ProducerOptions(new ServiceCollection());
             sut.WithBootstrapServers("foo");
 
             var configuration = sut.Build();
@@ -37,7 +38,7 @@ namespace Dafda.Tests.Configuration
         [Fact]
         public void Can_build_producer_configuration()
         {
-            var sut = new ProducerOptions();
+            var sut = new ProducerOptions(new ServiceCollection());
             sut.WithConfigurationSource(new ConfigurationSourceStub(
                 (key: ConfigurationKeys.BootstrapServers, value: "foo"),
                 (key: ConfigurationKeys.SaslUsername, value: "username"),
@@ -62,7 +63,7 @@ namespace Dafda.Tests.Configuration
         public void Has_expected_message_id_generator()
         {
             var dummy = MessageIdGenerator.Default;
-            var sut = new ProducerOptions();
+            var sut = new ProducerOptions(new ServiceCollection());
             sut.WithBootstrapServers("foo");
             sut.WithMessageIdGenerator(dummy);
 

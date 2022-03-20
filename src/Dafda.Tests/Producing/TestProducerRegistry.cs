@@ -2,6 +2,7 @@ using Dafda.Configuration;
 using Dafda.Producing;
 using Dafda.Tests.Builders;
 using Dafda.Tests.TestDoubles;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -21,7 +22,7 @@ namespace Dafda.Tests.Producing
         [Fact]
         public void returns_expected_when_getting_by_a_known_name()
         {
-            var options = new ProducerOptions();
+            var options = new ProducerOptions(new ServiceCollection());
             options.WithBootstrapServers("dummy");
             var producerConfigurationStub = options.Build();
 
@@ -37,7 +38,7 @@ namespace Dafda.Tests.Producing
         [Fact]
         public void returns_expected_when_getting_by_an_unknown_name()
         {
-            var options = new ProducerOptions();
+            var options = new ProducerOptions(new ServiceCollection());
             options.WithBootstrapServers("dummy");
             var producerConfigurationStub = options.Build();
 
@@ -54,7 +55,7 @@ namespace Dafda.Tests.Producing
         {
             var sut = new ProducerRegistryBuilder().Build();
 
-            var options = new ProducerOptions();
+            var options = new ProducerOptions(new ServiceCollection());
             options.WithBootstrapServers("dummy");
             var producerConfiguration = options.Build();
             
@@ -76,7 +77,7 @@ namespace Dafda.Tests.Producing
 
             using (var sut = new ProducerRegistryBuilder().Build())
             {
-                var options = new ProducerOptions();
+                var options = new ProducerOptions(new ServiceCollection());
                 options.WithBootstrapServers("dummy");
                 options.WithKafkaProducerFactory(_ => spy);
                 var producerConfiguration = options.Build();

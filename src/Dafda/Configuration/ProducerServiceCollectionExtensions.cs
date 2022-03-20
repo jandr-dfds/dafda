@@ -26,7 +26,7 @@ namespace Dafda.Configuration
 
         private static ProducerRegistry RegisterProducer<TImplementation>(IServiceCollection services, Action<ProducerOptions> options)
         {
-            var consumerOptions = new ProducerOptions();
+            var consumerOptions = new ProducerOptions(services);
             options?.Invoke(consumerOptions);
 
             var producerConfiguration = consumerOptions.Build();
