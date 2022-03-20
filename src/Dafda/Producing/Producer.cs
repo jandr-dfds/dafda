@@ -19,7 +19,7 @@ namespace Dafda.Producing
             _payloadDescriptorFactory = new PayloadDescriptorFactory(outgoingMessageRegistry, messageIdGenerator);
         }
 
-        internal string Name { get; set; } = "__Default Producer__";
+        internal string Name { get; init; } = "__Default Producer__";
         
         /// <summary>
         /// Produce a <paramref name="message"/> on Kafka
