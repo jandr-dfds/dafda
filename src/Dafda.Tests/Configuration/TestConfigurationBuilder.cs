@@ -86,7 +86,7 @@ namespace Dafda.Tests.Configuration
                 .WithConfigurationSource(new ConfigurationSourceStub(
                     (key: "KEY1", value: "foo")
                 ))
-                .WithNamingConventions(NamingConvention.UseCustom(x => x.ToUpper()))
+                .WithNamingConventions(new NamingConventions { x => x.ToUpper() })
                 .Build();
 
             AssertKeyValue(configuration, "key1", "foo");
@@ -115,7 +115,7 @@ namespace Dafda.Tests.Configuration
                 .WithConfigurationSource(new ConfigurationSourceStub(
                     (key: "KEY1", value: "foo")
                 ))
-                .WithNamingConventions(NamingConvention.Default, NamingConvention.UseCustom(x => x.ToUpper()))
+                .WithNamingConventions(new NamingConventions { NamingConvention.Default, x => x.ToUpper() })
                 .Build();
 
             AssertKeyValue(configuration, "key1", "foo");
@@ -129,7 +129,7 @@ namespace Dafda.Tests.Configuration
                     (key: "KEY1", value: "foo"),
                     (key: "key1", value: "bar")
                 ))
-                .WithNamingConventions(NamingConvention.UseCustom(x => x.ToUpper()), NamingConvention.Default)
+                .WithNamingConventions(new NamingConventions { x => x.ToUpper(), NamingConvention.Default })
                 .Build();
 
             AssertKeyValue(configuration, "key1", "foo");
@@ -150,7 +150,7 @@ namespace Dafda.Tests.Configuration
                 {
                     { "key3", "value" }
                 })
-                .WithNamingConventions(NamingConvention.Default, NamingConvention.UseCustom(x => x.ToUpper()))
+                .WithNamingConventions(new NamingConventions { NamingConvention.Default, x => x.ToUpper() })
                 .WithConfigurationReporter(sut)
                 .Build();
 

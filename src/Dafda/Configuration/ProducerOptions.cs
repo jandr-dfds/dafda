@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Dafda.Producing;
 using Dafda.Serializing;
 using Microsoft.Extensions.Logging;
@@ -20,7 +19,7 @@ namespace Dafda.Configuration
         }
 
         private readonly IDictionary<string, string> _configurations = new Dictionary<string, string>();
-        private readonly IList<NamingConvention> _namingConventions = new List<NamingConvention>();
+        private readonly NamingConventions _namingConventions = new();
 
         private ConfigurationSource _configurationSource = ConfigurationSource.Null;
         private MessageIdGenerator _messageIdGenerator = MessageIdGenerator.Default;
@@ -193,7 +192,7 @@ namespace Dafda.Configuration
         {
             var configurations = ConfigurationBuilder
                 .ForProducer
-                .WithNamingConventions(_namingConventions.ToArray())
+                .WithNamingConventions(_namingConventions)
                 .WithConfigurationSource(_configurationSource)
                 .WithConfigurations(_configurations)
                 .Build();

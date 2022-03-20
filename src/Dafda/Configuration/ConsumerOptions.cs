@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Dafda.Consuming;
 using Dafda.Consuming.MessageFilters;
@@ -15,7 +14,7 @@ namespace Dafda.Configuration
     /// </summary>
     public sealed class ConsumerOptions
     {
-        private readonly IList<NamingConvention> _namingConventions = new List<NamingConvention>();
+        private readonly NamingConventions _namingConventions = new();
         private readonly IDictionary<string, string> _configurations = new Dictionary<string, string>();
         private readonly IServiceCollection _services;
         private readonly MessageHandlerRegistry _messageHandlerRegistry;
@@ -276,7 +275,7 @@ namespace Dafda.Configuration
 
             var configuration = ConfigurationBuilder
                 .ForConsumer
-                .WithNamingConventions(_namingConventions.ToArray())
+                .WithNamingConventions(_namingConventions)
                 .WithConfigurationSource(_configurationSource)
                 .WithConfigurations(_configurations)
                 .Build();

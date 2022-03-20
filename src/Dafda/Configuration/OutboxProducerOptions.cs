@@ -15,7 +15,7 @@ namespace Dafda.Configuration
     public sealed class OutboxProducerOptions
     {
         private readonly IDictionary<string, string> _configurations = new Dictionary<string, string>();
-        private readonly IList<NamingConvention> _namingConventions = new List<NamingConvention>();
+        private readonly NamingConventions _namingConventions = new();
         private readonly MessageIdGenerator _messageIdGenerator = MessageIdGenerator.Default;
         private readonly TopicPayloadSerializerRegistry _topicPayloadSerializerRegistry = new(() => new DefaultPayloadSerializer());
 
@@ -143,7 +143,7 @@ namespace Dafda.Configuration
         {
             var configurations = ConfigurationBuilder
                 .ForProducer
-                .WithNamingConventions(_namingConventions.ToArray())
+                .WithNamingConventions(_namingConventions)
                 .WithConfigurationSource(_configurationSource)
                 .WithConfigurations(_configurations)
                 .Build();

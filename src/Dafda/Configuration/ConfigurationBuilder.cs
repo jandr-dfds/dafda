@@ -1,24 +1,23 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Dafda.Configuration
 {
     internal record ConfigurationBuilder(ConfigurationKeys ConfigurationKeys)
     {
-        private static readonly NamingConvention[] DefaultNamingConventions = { NamingConvention.Default };
+        private static readonly NamingConventions DefaultNamingConventions = new() { NamingConvention.Default };
         private static readonly IDictionary<string, string> Empty = new Dictionary<string, string>();
 
         public static ConfigurationBuilder ForConsumer => new ConfigurationBuilder(ConfigurationKeys.Consumer);
         public static ConfigurationBuilder ForProducer => new ConfigurationBuilder(ConfigurationKeys.Producer);
 
         private ConfigurationKeys ConfigurationKeys { get; } = ConfigurationKeys;
-        private NamingConvention[] NamingConventions { get; init; } = DefaultNamingConventions;
+        private NamingConventions NamingConventions { get; init; } = DefaultNamingConventions;
         private ConfigurationSource ConfigurationSource { get; init; } = ConfigurationSource.Null;
         private IDictionary<string, string> Configurations { get; init; } = Empty;
         private ConfigurationReporter ConfigurationReporter { get; init; } = ConfigurationReporter.CreateDefault();
 
-        public ConfigurationBuilder WithNamingConventions(params NamingConvention[] namingConventions)
+        public ConfigurationBuilder WithNamingConventions(NamingConventions namingConventions)
         {
             return this with { NamingConventions = namingConventions };
         }
@@ -87,7 +86,7 @@ namespace Dafda.Configuration
                 }
             }
 
-            ConfigurationReporter.AddMissing(key, GetSourceName(), GetAttemptedKeys(key));
+            ConfigurationReporter.AddMissing(key, GetSourceName(), NamingConventions.GetAttemptedKeys(key));
 
             return null;
         }
@@ -95,11 +94,6 @@ namespace Dafda.Configuration
         private string GetSourceName()
         {
             return ConfigurationSource.GetType().Name;
-        }
-
-        private string[] GetAttemptedKeys(string key)
-        {
-            return NamingConventions.Select(convention => convention.GetKey(key)).ToArray();
         }
 
         private void ValidateConfiguration(IDictionary<string, string> configurations)
