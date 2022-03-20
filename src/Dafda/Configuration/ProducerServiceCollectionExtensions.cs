@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using Dafda.Producing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -56,25 +55,8 @@ namespace Dafda.Configuration
 
             var producerConfiguration = consumerOptions.Build();
 
-            var factory = AddOrGetRegisteredProducerFactory(services);
+            var factory = services.GetOrAddSingleton(() => new ProducerFactory());
             factory.ConfigureProducerFor<TImplementation>(producerConfiguration, outgoingMessageRegistry);
-            return factory;
-        }
-
-        private static ProducerFactory AddOrGetRegisteredProducerFactory(IServiceCollection services)
-        {
-            var factory = services
-                .Where(x => x.ServiceType == typeof(ProducerFactory))
-                .Select(x => x.ImplementationInstance)
-                .Cast<ProducerFactory>()
-                .SingleOrDefault();
-
-            if (factory == null)
-            {
-                factory = new ProducerFactory();
-                services.AddSingleton(factory);
-            }
-
             return factory;
         }
     }
