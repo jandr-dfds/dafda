@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace Dafda.Consuming;
 
 /// <summary>
-/// 
+/// Represents a delegate for the <see cref="IMessageHandler{T}.Handle"/> method.
 /// </summary>
 public sealed class MessageHandlerDelegate
 {
@@ -55,18 +55,11 @@ public sealed class MessageHandlerDelegate
     }
 
     /// <summary>
-    /// 
+    /// The type of the class implementing <see cref="IMessageHandler{T}"/>.
     /// </summary>
     public Type HandlerType { get; }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="instance"></param>
-    /// <param name="message"></param>
-    /// <param name="context"></param>
-    /// <returns></returns>
-    public Task Invoke(object instance, object message, MessageHandlerContext context)
+    internal Task Invoke(object instance, object message, MessageHandlerContext context)
     {
         return _invocation(instance, message, context);
     }
