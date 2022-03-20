@@ -139,7 +139,7 @@ namespace Dafda.Configuration
             OutboxListener = outboxListener;
         }
 
-        internal ProducerConfiguration Build()
+        internal OutboxProducerConfiguration Build()
         {
             var configurations = ConfigurationBuilder
                 .ForProducer
@@ -153,11 +153,7 @@ namespace Dafda.Configuration
                 _kafkaProducerFactory = loggerFactory => new KafkaProducer(loggerFactory, configurations, _topicPayloadSerializerRegistry);
             }
 
-            return new ProducerConfiguration(
-                configurations,
-                _messageIdGenerator,
-                _kafkaProducerFactory
-            );
+            return new OutboxProducerConfiguration(_kafkaProducerFactory);
         }
 
         private class DefaultConfigurationSource : ConfigurationSource
