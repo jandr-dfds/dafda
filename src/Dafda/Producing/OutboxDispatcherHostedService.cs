@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Dafda.Outbox;
@@ -6,7 +5,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace Dafda.Producing
 {
-    internal class OutboxDispatcherHostedService : BackgroundService, IDisposable
+    internal class OutboxDispatcherHostedService : BackgroundService
     {
         private readonly IOutboxListener _outboxListener;
         private readonly OutboxDispatcher _outboxDispatcher;
