@@ -71,9 +71,9 @@ namespace Dafda.Tests.Producing
 
             using (var sut = new ProducerFactoryBuilder().Build())
             {
-                var producerConfiguration = A.ValidProducerConfiguration
-                    .WithKafkaProducerFactory(_ => spy)
-                    .Build();
+                var options = A.ValidProducerConfiguration;
+                options.WithKafkaProducerFactory(_ => spy);
+                var producerConfiguration = options.Build();
 
                 sut.ConfigureProducer(
                     producerName: "foo",

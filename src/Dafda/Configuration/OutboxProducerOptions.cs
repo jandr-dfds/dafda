@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Dafda.Outbox;
 using Dafda.Producing;
+using Dafda.Serializing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -11,13 +14,19 @@ namespace Dafda.Configuration
     /// </summary>
     public sealed class OutboxProducerOptions
     {
-        private readonly ProducerConfigurationBuilder _builder;
+        private readonly IDictionary<string, string> _configurations = new Dictionary<string, string>();
+        private readonly IList<NamingConvention> _namingConventions = new List<NamingConvention>();
+        private readonly MessageIdGenerator _messageIdGenerator = MessageIdGenerator.Default;
+        private readonly TopicPayloadSerializerRegistry _topicPayloadSerializerRegistry = new(() => new DefaultPayloadSerializer());
+
+        private ConfigurationSource _configurationSource = ConfigurationSource.Null;
+        private Func<ILoggerFactory, KafkaProducer> _kafkaProducerFactory;
+
         private readonly IServiceCollection _services;
 
-        internal OutboxProducerOptions(ProducerConfigurationBuilder builder, IServiceCollection services)
+        internal OutboxProducerOptions(IServiceCollection services)
         {
             _services = services;
-            _builder = builder;
         }
 
         internal IOutboxListener OutboxListener { get; private set; }
@@ -28,7 +37,7 @@ namespace Dafda.Configuration
         /// <param name="configuration">The configuration instance.</param>
         public void WithConfigurationSource(Microsoft.Extensions.Configuration.IConfiguration configuration)
         {
-            _builder.WithConfigurationSource(new DefaultConfigurationSource(configuration));
+            WithConfigurationSource(new DefaultConfigurationSource(configuration));
         }
 
         /// <summary>
@@ -37,7 +46,7 @@ namespace Dafda.Configuration
         /// <param name="configurationSource">The <see cref="ConfigurationSource"/> to use.</param>
         public void WithConfigurationSource(ConfigurationSource configurationSource)
         {
-            _builder.WithConfigurationSource(configurationSource);
+            _configurationSource = configurationSource;
         }
 
         /// <summary>
@@ -47,7 +56,7 @@ namespace Dafda.Configuration
         /// <param name="converter">Use this to transform keys.</param>
         public void WithNamingConvention(Func<string, string> converter)
         {
-            _builder.WithNamingConvention(converter);
+            WithNamingConvention(NamingConvention.UseCustom(converter));
         }
 
         /// <summary>
@@ -66,7 +75,17 @@ namespace Dafda.Configuration
         /// <param name="additionalPrefixes">Additional prefixes to use before keys.</param>
         public void WithEnvironmentStyle(string prefix = null, params string[] additionalPrefixes)
         {
-            _builder.WithEnvironmentStyle(prefix, additionalPrefixes);
+            WithNamingConvention(NamingConvention.UseEnvironmentStyle(prefix));
+
+            foreach (var additionalPrefix in additionalPrefixes)
+            {
+                WithNamingConvention(NamingConvention.UseEnvironmentStyle(additionalPrefix));
+            }
+        }
+
+        private void WithNamingConvention(NamingConvention namingConvention)
+        {
+            _namingConventions.Add(namingConvention);
         }
 
         /// <summary>
@@ -76,7 +95,7 @@ namespace Dafda.Configuration
         /// <param name="value">The configuration value.</param>
         public void WithConfiguration(string key, string value)
         {
-            _builder.WithConfiguration(key, value);
+            _configurations[key] = value;
         }
 
         /// <summary>
@@ -85,12 +104,12 @@ namespace Dafda.Configuration
         /// <param name="bootstrapServers">A list of bootstrap servers.</param>
         public void WithBootstrapServers(string bootstrapServers)
         {
-            _builder.WithBootstrapServers(bootstrapServers);
+            WithConfiguration(ConfigurationKeys.BootstrapServers, bootstrapServers);
         }
 
         internal void WithKafkaProducerFactory(Func<ILoggerFactory, KafkaProducer> inlineFactory)
         {
-            _builder.WithKafkaProducerFactory(inlineFactory);
+            _kafkaProducerFactory = inlineFactory;
         }
 
         /// <summary>
@@ -118,6 +137,27 @@ namespace Dafda.Configuration
         public void WithListener(IOutboxListener outboxListener)
         {
             OutboxListener = outboxListener;
+        }
+
+        internal ProducerConfiguration Build()
+        {
+            var configurations = ConfigurationBuilder
+                .ForProducer
+                .WithNamingConventions(_namingConventions.ToArray())
+                .WithConfigurationSource(_configurationSource)
+                .WithConfigurations(_configurations)
+                .Build();
+
+            if (_kafkaProducerFactory == null)
+            {
+                _kafkaProducerFactory = loggerFactory => new KafkaProducer(loggerFactory, configurations, _topicPayloadSerializerRegistry);
+            }
+
+            return new ProducerConfiguration(
+                configurations,
+                _messageIdGenerator,
+                _kafkaProducerFactory
+            );
         }
 
         private class DefaultConfigurationSource : ConfigurationSource

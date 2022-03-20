@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Dafda.Producing;
 using Dafda.Serializing;
 using Microsoft.Extensions.Logging;
@@ -10,14 +12,20 @@ namespace Dafda.Configuration
     /// </summary>
     public sealed class ProducerOptions
     {
-        private readonly ProducerConfigurationBuilder _builder;
         private readonly OutgoingMessageRegistry _outgoingMessageRegistry;
 
-        internal ProducerOptions(ProducerConfigurationBuilder builder, OutgoingMessageRegistry outgoingMessageRegistry)
+        internal ProducerOptions(OutgoingMessageRegistry outgoingMessageRegistry)
         {
-            _builder = builder;
             _outgoingMessageRegistry = outgoingMessageRegistry;
         }
+
+        private readonly IDictionary<string, string> _configurations = new Dictionary<string, string>();
+        private readonly IList<NamingConvention> _namingConventions = new List<NamingConvention>();
+
+        private ConfigurationSource _configurationSource = ConfigurationSource.Null;
+        private MessageIdGenerator _messageIdGenerator = MessageIdGenerator.Default;
+        private Func<ILoggerFactory, KafkaProducer> _kafkaProducerFactory;
+        private readonly TopicPayloadSerializerRegistry _topicPayloadSerializerRegistry = new TopicPayloadSerializerRegistry(() => new DefaultPayloadSerializer());
 
         /// <summary>
         /// Specify a custom implementation of the <see cref="ConfigurationSource"/> to use. 
@@ -25,7 +33,7 @@ namespace Dafda.Configuration
         /// <param name="configurationSource">The <see cref="ConfigurationSource"/> to use.</param>
         public void WithConfigurationSource(ConfigurationSource configurationSource)
         {
-            _builder.WithConfigurationSource(configurationSource);
+            _configurationSource = configurationSource;
         }
 
         /// <summary>
@@ -34,7 +42,7 @@ namespace Dafda.Configuration
         /// <param name="configuration">The configuration instance.</param>
         public void WithConfigurationSource(Microsoft.Extensions.Configuration.IConfiguration configuration)
         {
-            _builder.WithConfigurationSource(new DefaultConfigurationSource(configuration));
+            WithConfigurationSource(new DefaultConfigurationSource(configuration));
         }
 
         /// <summary>
@@ -44,7 +52,12 @@ namespace Dafda.Configuration
         /// <param name="converter">Use this to transform keys.</param>
         public void WithNamingConvention(Func<string, string> converter)
         {
-            _builder.WithNamingConvention(converter);
+            _namingConventions.Add(NamingConvention.UseCustom(converter));
+        }
+
+        internal void WithNamingConvention(NamingConvention namingConvention)
+        {
+            _namingConventions.Add(namingConvention);
         }
 
         /// <summary>
@@ -63,7 +76,12 @@ namespace Dafda.Configuration
         /// <param name="additionalPrefixes">Additional prefixes to use before keys.</param>
         public void WithEnvironmentStyle(string prefix = null, params string[] additionalPrefixes)
         {
-            _builder.WithEnvironmentStyle(prefix, additionalPrefixes);
+            WithNamingConvention(NamingConvention.UseEnvironmentStyle(prefix));
+
+            foreach (var additionalPrefix in additionalPrefixes)
+            {
+                WithNamingConvention(NamingConvention.UseEnvironmentStyle(additionalPrefix));
+            }
         }
 
         /// <summary>
@@ -73,7 +91,7 @@ namespace Dafda.Configuration
         /// <param name="value">The configuration value.</param>
         public void WithConfiguration(string key, string value)
         {
-            _builder.WithConfiguration(key, value);
+            _configurations[key] = value;
         }
 
         /// <summary>
@@ -82,12 +100,12 @@ namespace Dafda.Configuration
         /// <param name="bootstrapServers">A list of bootstrap servers.</param>
         public void WithBootstrapServers(string bootstrapServers)
         {
-            _builder.WithBootstrapServers(bootstrapServers);
+            WithConfiguration(ConfigurationKeys.BootstrapServers, bootstrapServers);
         }
 
         internal void WithKafkaProducerFactory(Func<ILoggerFactory, KafkaProducer> inlineFactory)
         {
-            _builder.WithKafkaProducerFactory(inlineFactory);
+            _kafkaProducerFactory = inlineFactory;
         }
 
         /// <summary>
@@ -96,7 +114,7 @@ namespace Dafda.Configuration
         /// <param name="messageIdGenerator">A custom implementation of <see cref="MessageIdGenerator"/>.</param>
         public void WithMessageIdGenerator(MessageIdGenerator messageIdGenerator)
         {
-            _builder.WithMessageIdGenerator(messageIdGenerator);
+            _messageIdGenerator = messageIdGenerator;
         }
 
         /// <summary>
@@ -129,7 +147,7 @@ namespace Dafda.Configuration
         /// </param>
         public void WithDefaultPayloadSerializer(Func<IPayloadSerializer> payloadSerializerFactory)
         {
-            _builder.WithDefaultPayloadSerializer(payloadSerializerFactory);
+            _topicPayloadSerializerRegistry.SetDefaultPayloadSerializer(payloadSerializerFactory);
         }
 
         /// <summary>
@@ -153,7 +171,7 @@ namespace Dafda.Configuration
         /// </param>
         public void WithPayloadSerializer(string topic, Func<IPayloadSerializer> payloadSerializerFactory)
         {
-            _builder.WithPayloadSerializer(topic, payloadSerializerFactory);
+            _topicPayloadSerializerRegistry.Register(topic, payloadSerializerFactory);
         }
 
         private class DefaultConfigurationSource : ConfigurationSource
@@ -169,6 +187,27 @@ namespace Dafda.Configuration
             {
                 return _configuration[key];
             }
+        }
+
+        internal ProducerConfiguration Build()
+        {
+            var configurations = ConfigurationBuilder
+                .ForProducer
+                .WithNamingConventions(_namingConventions.ToArray())
+                .WithConfigurationSource(_configurationSource)
+                .WithConfigurations(_configurations)
+                .Build();
+
+            if (_kafkaProducerFactory == null)
+            {
+                _kafkaProducerFactory = loggerFactory => new KafkaProducer(loggerFactory, configurations, _topicPayloadSerializerRegistry);
+            }
+
+            return new ProducerConfiguration(
+                configurations,
+                _messageIdGenerator,
+                _kafkaProducerFactory
+            );
         }
     }
 }

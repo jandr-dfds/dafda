@@ -51,11 +51,10 @@ namespace Dafda.Configuration
         private static ProducerFactory CreateProducerFactory<TImplementation>(IServiceCollection services, Action<ProducerOptions> options)
         {
             var outgoingMessageRegistry = new OutgoingMessageRegistry();
-            var configurationBuilder = new ProducerConfigurationBuilder();
-            var consumerOptions = new ProducerOptions(configurationBuilder, outgoingMessageRegistry);
+            var consumerOptions = new ProducerOptions(outgoingMessageRegistry);
             options?.Invoke(consumerOptions);
 
-            var producerConfiguration = configurationBuilder.Build();
+            var producerConfiguration = consumerOptions.Build();
 
             var factory = AddOrGetRegisteredProducerFactory(services);
             factory.ConfigureProducerFor<TImplementation>(producerConfiguration, outgoingMessageRegistry);

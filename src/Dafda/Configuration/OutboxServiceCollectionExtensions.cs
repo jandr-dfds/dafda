@@ -39,10 +39,9 @@ namespace Dafda.Configuration
         /// <param name="options">Configure the <see cref="OutboxProducerOptions"/></param>
         public static void AddOutboxProducer(this IServiceCollection services, Action<OutboxProducerOptions> options)
         {
-            var builder = new ProducerConfigurationBuilder();
-            var outboxProducerOptions = new OutboxProducerOptions(builder, services);
+            var outboxProducerOptions = new OutboxProducerOptions(services);
             options?.Invoke(outboxProducerOptions);
-            var configuration = builder.Build();
+            var configuration = outboxProducerOptions.Build();
 
             var outboxListener = outboxProducerOptions.OutboxListener;
             if (outboxListener == null)
