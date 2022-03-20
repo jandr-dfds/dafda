@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Threading.Tasks;
+using Dafda.Tests.Builders;
 using Dafda.Tests.Helpers;
 using Dafda.Tests.TestDoubles;
 using Xunit;
@@ -50,6 +51,12 @@ namespace Dafda.Tests.Producing
             }
 
             public string AggregateId { get; }
+        }
+
+        private static class A
+        {
+            public static ProducerBuilder Producer => new();
+            public static OutgoingMessageRegistryBuilder OutgoingMessageRegistry => new();
         }
     }
 }

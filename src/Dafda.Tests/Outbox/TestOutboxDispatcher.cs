@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Dafda.Tests.Builders;
 using Dafda.Tests.TestDoubles;
 using Xunit;
 
@@ -28,6 +29,13 @@ namespace Dafda.Tests.Outbox
             Assert.Equal("foo", spy.Topic);
             Assert.Equal("bar", spy.Key);
             Assert.Equal("baz", spy.Value);
+        }
+
+        private static class A
+        {
+            public static OutboxProducerBuilder OutboxProducer => new();
+            public static OutboxDispatcherBuilder OutboxDispatcher => new();
+            public static OutboxEntryBuilder OutboxEntry => new();
         }
     }
 }

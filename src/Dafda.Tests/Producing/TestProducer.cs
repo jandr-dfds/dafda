@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Dafda.Consuming;
+using Dafda.Tests.Builders;
 using Dafda.Tests.Helpers;
 using Dafda.Tests.TestDoubles;
 using Xunit;
@@ -244,6 +245,12 @@ namespace Dafda.Tests.Producing
                             }";
 
             AssertJson.Equal(expected, spy.Value);
+        }
+
+        private static class A
+        {
+            public static ProducerBuilder Producer => new();
+            public static OutgoingMessageRegistryBuilder OutgoingMessageRegistry => new();
         }
     }
 }

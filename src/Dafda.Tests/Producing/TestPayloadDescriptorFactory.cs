@@ -2,6 +2,7 @@
 using System.Linq;
 using Dafda.Consuming;
 using Dafda.Producing;
+using Dafda.Tests.Builders;
 using Dafda.Tests.TestDoubles;
 using Xunit;
 
@@ -31,6 +32,11 @@ namespace Dafda.Tests.Producing
 
             Assert.Equal("1", correlationId);
             Assert.Equal("1", causationId);
+        }
+
+        private static class A
+        {
+            public static OutgoingMessageRegistryBuilder OutgoingMessageRegistry => new OutgoingMessageRegistryBuilder();
         }
     }
 }

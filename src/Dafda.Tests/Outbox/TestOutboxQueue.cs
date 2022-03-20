@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Dafda.Consuming;
+using Dafda.Tests.Builders;
 using Dafda.Tests.Helpers;
 using Dafda.Tests.TestDoubles;
 using Xunit;
@@ -14,7 +15,7 @@ namespace Dafda.Tests.Outbox
         {
             var sut = A.OutboxQueue.Build();
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => sut.Enqueue(new[] {new Message()}));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => sut.Enqueue(new[] { new Message() }));
         }
 
         [Fact]
@@ -68,12 +69,17 @@ namespace Dafda.Tests.Outbox
                                 }
                             }";
 
-
-            AssertJson.Equal(expected, spy.OutboxEntries[0].Payload );
+            AssertJson.Equal(expected, spy.OutboxEntries[0].Payload);
         }
 
         public class Message
         {
+        }
+
+        private static class A
+        {
+            public static OutboxQueueBuilder OutboxQueue => new();
+            public static OutgoingMessageRegistryBuilder OutgoingMessageRegistry => new();
         }
     }
 }
