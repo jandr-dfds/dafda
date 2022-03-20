@@ -41,9 +41,8 @@ namespace Dafda.Configuration
                 configuration.ConsumerErrorHandler
             );
             }
-
-            services.AddTransient<IHostedService, ConsumerHostedService>(CreateConsumerHostedService);
-            services.AddTransient<ConsumerHostedService>(CreateConsumerHostedService); // NOTE: [jandr] is this needed?
+            
+            services.AddSingleton<IHostedService, ConsumerHostedService>(CreateConsumerHostedService);
         }
     }
 }
