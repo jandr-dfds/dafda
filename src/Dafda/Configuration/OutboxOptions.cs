@@ -13,17 +13,17 @@ namespace Dafda.Configuration
     /// </summary>
     public sealed class OutboxOptions
     {
+        private readonly OutgoingMessageRegistry _outgoingMessageRegistry = new();
+        private readonly TopicPayloadSerializerRegistry _topicPayloadSerializerRegistry = new(() => new DefaultPayloadSerializer());
+
         private readonly IServiceCollection _services;
-        private readonly OutgoingMessageRegistry _outgoingMessageRegistry;
-        private readonly TopicPayloadSerializerRegistry _topicPayloadSerializerRegistry = new TopicPayloadSerializerRegistry(() => new DefaultPayloadSerializer());
 
         private MessageIdGenerator _messageIdGenerator = MessageIdGenerator.Default;
         private IOutboxNotifier _notifier = new DoNotNotify();
 
-        internal OutboxOptions(IServiceCollection services, OutgoingMessageRegistry outgoingMessageRegistry)
+        internal OutboxOptions(IServiceCollection services)
         {
             _services = services;
-            _outgoingMessageRegistry = outgoingMessageRegistry;
         }
 
         /// <summary>
@@ -131,7 +131,11 @@ namespace Dafda.Configuration
 
         internal OutboxConfiguration Build()
         {
-            return new OutboxConfiguration(_messageIdGenerator, _notifier, _topicPayloadSerializerRegistry);
+            return new OutboxConfiguration(
+                _messageIdGenerator,
+                _notifier,
+                _topicPayloadSerializerRegistry,
+                _outgoingMessageRegistry);
         }
 
         private class DoNotNotify : IOutboxNotifier
