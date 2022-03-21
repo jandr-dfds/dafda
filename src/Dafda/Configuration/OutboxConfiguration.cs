@@ -1,26 +1,17 @@
+using Dafda.Middleware;
 using Dafda.Outbox;
-using Dafda.Producing;
-using Dafda.Serializing;
 
 namespace Dafda.Configuration
 {
     internal class OutboxConfiguration
     {
-        public OutboxConfiguration(
-            MessageIdGenerator messageIdGenerator,
-            IOutboxNotifier notifier,
-            TopicPayloadSerializerRegistry topicPayloadSerializerRegistry,
-            OutgoingMessageRegistry outgoingMessageRegistry)
+        public OutboxConfiguration(IOutboxNotifier notifier, MiddlewareBuilder<OutboxMessageContext> middlewareBuilder)
         {
-            MessageIdGenerator = messageIdGenerator;
             Notifier = notifier;
-            TopicPayloadSerializerRegistry = topicPayloadSerializerRegistry;
-            OutgoingMessageRegistry = outgoingMessageRegistry;
+            MiddlewareBuilder = middlewareBuilder;
         }
 
-        public MessageIdGenerator MessageIdGenerator { get; }
         public IOutboxNotifier Notifier { get; }
-        public TopicPayloadSerializerRegistry TopicPayloadSerializerRegistry { get; }
-        public OutgoingMessageRegistry OutgoingMessageRegistry { get; }
+        public MiddlewareBuilder<OutboxMessageContext> MiddlewareBuilder { get; }
     }
 }

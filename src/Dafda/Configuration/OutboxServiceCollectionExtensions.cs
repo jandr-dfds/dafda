@@ -22,13 +22,16 @@ namespace Dafda.Configuration
             options?.Invoke(outboxOptions);
             var configuration = outboxOptions.Build();
 
-            services.AddTransient(provider => new OutboxQueue(
-                configuration.MessageIdGenerator,
-                configuration.OutgoingMessageRegistry,
-                provider.GetRequiredService<IOutboxEntryRepository>(),
-                configuration.Notifier,
-                configuration.TopicPayloadSerializerRegistry
-            ));
+            services.AddTransient(provider =>
+            {
+                var middlewares = configuration
+                    .MiddlewareBuilder
+                    .Build(provider);
+
+                var pipeline = new Pipeline(middlewares);
+
+                return new OutboxQueue(configuration.Notifier, pipeline);
+            });
         }
 
         /// <summary>

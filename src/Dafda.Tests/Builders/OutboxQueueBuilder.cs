@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Dafda.Middleware;
 using Dafda.Outbox;
 using Dafda.Producing;
 using Dafda.Serializing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Dafda.Tests.Builders
 {
@@ -25,21 +27,20 @@ namespace Dafda.Tests.Builders
             return this;
         }
 
-        public OutboxQueueBuilder With(IPayloadSerializer payloadSerializer)
-        {
-            _payloadSerializer = payloadSerializer;
-            return this;
-        }
-
         public OutboxQueue Build()
         {
-            return new OutboxQueue(
-                messageIdGenerator: MessageIdGenerator.Default,
-                outgoingMessageRegistry: _outgoingMessageRegistry,
-                repository: _outboxEntryRepository,
-                outboxNotifier: new NullOutboxNotifier(),
-                serializerRegistry: new TopicPayloadSerializerRegistry(() => _payloadSerializer)
-            );
+            var services = new ServiceCollection();
+            var middlewareBuilder = new MiddlewareBuilder<OutboxMessageContext>(services);
+
+            middlewareBuilder
+                .Register(_ => new OutboxPayloadDescriptionMiddleware(_outgoingMessageRegistry, MessageIdGenerator.Default))
+                .Register(_ => new OutboxSerializationMiddleware(new TopicPayloadSerializerRegistry(() => _payloadSerializer)))
+                .Register(_ => new OutboxStorageMiddleware(_outboxEntryRepository));
+
+            var serviceProvider = services.BuildServiceProvider();
+            var pipeline = new Pipeline(middlewareBuilder.Build(serviceProvider));
+
+            return new OutboxQueue(outboxNotifier: new NullOutboxNotifier(), pipeline);
         }
 
         public static implicit operator OutboxQueue(OutboxQueueBuilder builder)

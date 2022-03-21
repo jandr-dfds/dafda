@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dafda.Middleware;
 using Dafda.Outbox;
 using Dafda.Producing;
 using Dafda.Serializing;
@@ -17,6 +18,7 @@ namespace Dafda.Configuration
         private readonly TopicPayloadSerializerRegistry _topicPayloadSerializerRegistry = new(() => new DefaultPayloadSerializer());
 
         private readonly IServiceCollection _services;
+        private readonly MiddlewareBuilder<OutboxMessageContext> _middlewareBuilder;
 
         private MessageIdGenerator _messageIdGenerator = MessageIdGenerator.Default;
         private IOutboxNotifier _notifier = new DoNotNotify();
@@ -24,6 +26,7 @@ namespace Dafda.Configuration
         internal OutboxOptions(IServiceCollection services)
         {
             _services = services;
+            _middlewareBuilder = new MiddlewareBuilder<OutboxMessageContext>(services);
         }
 
         /// <summary>
@@ -131,11 +134,13 @@ namespace Dafda.Configuration
 
         internal OutboxConfiguration Build()
         {
-            return new OutboxConfiguration(
-                _messageIdGenerator,
-                _notifier,
-                _topicPayloadSerializerRegistry,
-                _outgoingMessageRegistry);
+            _middlewareBuilder
+                .Register(_ => new OutboxPayloadDescriptionMiddleware(_outgoingMessageRegistry, _messageIdGenerator))
+                .Register(_ => new OutboxSerializationMiddleware(_topicPayloadSerializerRegistry))
+                .Register(provider => new OutboxStorageMiddleware(provider.GetRequiredService<IOutboxEntryRepository>()))
+                ;
+
+            return new OutboxConfiguration(_notifier, _middlewareBuilder);
         }
 
         private class DoNotNotify : IOutboxNotifier
