@@ -21,7 +21,7 @@ namespace Dafda.Producing
         /// <param name="entry">The outbox message</param>
         public async Task Produce(OutboxEntry entry)
         {
-            await _kafkaProducer.InternalProduce(entry.Topic, entry.Key, entry.Payload);
+            await _kafkaProducer.Produce(new OutgoingRawMessage(entry.Topic, entry.Key, entry.Payload));
         }
     }
 }

@@ -148,7 +148,7 @@ namespace Dafda.Configuration
                 .WithConfigurations(_configurations)
                 .Build();
 
-            _kafkaProducerFactory ??= loggerFactory => new KafkaProducer(loggerFactory, configurations, _topicPayloadSerializerRegistry);
+            _kafkaProducerFactory ??= loggerFactory => new KafkaProducer(loggerFactory, configurations);
 
             return new OutboxProducerConfiguration(_kafkaProducerFactory);
         }

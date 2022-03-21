@@ -15,7 +15,7 @@ internal class DispatchMiddleware : IMiddleware<OutgoingRawMessageContext, Dispa
 
     public Task Invoke(OutgoingRawMessageContext context, Func<IEndOfPipelineContext, Task> next)
     {
-        return _kafkaProducer.InternalProduce(context.Message.Topic, context.Message.Key, context.Message.Data);
+        return _kafkaProducer.Produce(context.Message);
     }
 
     public interface IEndOfPipelineContext : IMiddlewareContext

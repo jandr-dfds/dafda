@@ -1,8 +1,7 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Dafda.Producing;
-using Dafda.Serializing;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Dafda.Tests.TestDoubles
@@ -10,30 +9,16 @@ namespace Dafda.Tests.TestDoubles
     internal class KafkaProducerSpy : KafkaProducer
     {
         public KafkaProducerSpy()
-            : this(Enumerable.Empty<KeyValuePair<string, string>>(), new DefaultPayloadSerializer())
+            : this(Enumerable.Empty<KeyValuePair<string, string>>())
         {
         }
 
-        public KafkaProducerSpy(IPayloadSerializer payloadSerializer)
-            : this(Enumerable.Empty<KeyValuePair<string, string>>(), payloadSerializer)
+        private KafkaProducerSpy(IEnumerable<KeyValuePair<string, string>> configuration)
+            : base(NullLoggerFactory.Instance, configuration)
         {
         }
 
-        private KafkaProducerSpy(IEnumerable<KeyValuePair<string, string>> configuration, IPayloadSerializer payloadSerializer)
-            : base(NullLoggerFactory.Instance, configuration, new TopicPayloadSerializerRegistry(() => payloadSerializer))
-        {
-        }
-
-        internal override Task InternalProduce(string topic, string key, string value)
-        {
-            Topic = topic;
-            Key = key;
-            Value = value;
-
-            return Task.CompletedTask;
-        }
-
-        internal override Task InternalProduce(OutgoingRawMessage message)
+        public override Task Produce(OutgoingRawMessage message)
         {
             Topic = message.Topic;
             Key = message.Key;

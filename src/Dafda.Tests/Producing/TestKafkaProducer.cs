@@ -10,45 +10,39 @@ namespace Dafda.Tests.Producing
         [Fact]
         public async Task produces_to_expected_topic()
         {
+            const string dummyTopic = "foo topic name";
             var spy = new KafkaProducerSpy();
 
-            var expected = "foo topic name";
+            await spy.Produce(A.OutgoingRawMessage.WithTopic(dummyTopic));
 
-            var payloadStub = new PayloadDescriptorBuilder()
-                .WithTopicName(expected)
-                .Build();
-
-            await spy.Produce(payloadStub);
-
-            Assert.Equal(expected, spy.Topic);
+            Assert.Equal(dummyTopic, spy.Topic);
         }
 
         [Fact]
         public async Task produces_message_with_expected_key()
         {
+            const string dummyKey = "foo partition key";
             var spy = new KafkaProducerSpy();
 
-            var expected = "foo partition key";
-            
-            var payloadStub = new PayloadDescriptorBuilder()
-                .WithPartitionKey(expected)
-                .Build();
+            await spy.Produce(A.OutgoingRawMessage.WithKey(dummyKey));
 
-            await spy.Produce(payloadStub);
-
-            Assert.Equal(expected, spy.Key);
+            Assert.Equal(dummyKey, spy.Key);
         }
 
         [Fact]
         public async Task produces_message_with_expected_value()
         {
-            var expected = "foo value 123";
-            var spy = new KafkaProducerSpy(new PayloadSerializerStub(expected));
+            const string dummyData = "foo value 123";
+            var spy = new KafkaProducerSpy();
 
-            var payloadStub = new PayloadDescriptorBuilder().Build();
-            await spy.Produce(payloadStub);
+            await spy.Produce(A.OutgoingRawMessage.WithData(dummyData));
 
-            Assert.Equal(expected, spy.Value);
+            Assert.Equal(dummyData, spy.Value);
+        }
+
+        private static class A
+        {
+            public static OutgoingRawMessageBuilder OutgoingRawMessage => new();
         }
     }
 }

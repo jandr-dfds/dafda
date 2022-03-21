@@ -207,7 +207,7 @@ namespace Dafda.Configuration
             _kafkaProducerFactory ??= provider =>
             {
                 var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
-                return new KafkaProducer(loggerFactory, configurations, _topicPayloadSerializerRegistry);
+                return new KafkaProducer(loggerFactory, configurations);
             };
 
             return new ProducerConfiguration(
