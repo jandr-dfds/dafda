@@ -1,8 +1,6 @@
 using System.Threading.Tasks;
 using Dafda.Middleware;
 using Dafda.Producing;
-using Dafda.Serializing;
-using Dafda.Tests.Builders;
 using Dafda.Tests.TestDoubles;
 using Xunit;
 
@@ -13,21 +11,14 @@ public class TestSerializationMiddleware
     [Fact]
     public async Task Can_create_outgoing_raw_message()
     {
-        OutgoingRawMessage message = null;
-        var sut = new SerializationMiddleware(new TopicPayloadSerializerRegistry(() => new PayloadSerializerStub("dummy-data")));
-        var payloadDescriptor = new PayloadDescriptorBuilder()
-            .WithTopicName("dummy-topic")
-            .WithPartitionKey("dummy-key")
-            .Build();
+        var spy = new KafkaProducerSpy();
+        var sut = new DispatchMiddleware(spy);
 
-        await sut.Invoke(new PayloadDescriptorContext(payloadDescriptor), context =>
-        {
-            message = context.Message;
-            return Task.CompletedTask;
-        });
+        var outgoingRawMessage = new OutgoingRawMessage("dummy-topic", "dummy-key", "dummy-data");
+        await sut.Invoke(new OutgoingRawMessageContext(outgoingRawMessage), _ => Task.CompletedTask);
         
-        Assert.Equal("dummy-topic", message.Topic);
-        Assert.Equal("dummy-key", message.Key);
-        Assert.Equal("dummy-data", message.Data);
+        Assert.Equal("dummy-topic",  spy.Topic);
+        Assert.Equal("dummy-key",  spy.Key);
+        Assert.Equal("dummy-data",  spy.Value);
     }
 }
