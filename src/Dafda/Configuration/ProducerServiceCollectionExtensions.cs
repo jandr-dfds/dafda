@@ -1,7 +1,6 @@
 using System;
 using Dafda.Producing;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Dafda.Configuration
 {
@@ -38,8 +37,7 @@ namespace Dafda.Configuration
 
         private static TImplementation CreateInstance<TImplementation>(IServiceProvider provider, ProducerRegistry registry)
         {
-            var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
-            var producer = registry.GetFor<TImplementation>(loggerFactory);
+            var producer = registry.GetFor<TImplementation>(provider);
             return ActivatorUtilities.CreateInstance<TImplementation>(provider, producer);
         }
 

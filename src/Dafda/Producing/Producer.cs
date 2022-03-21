@@ -1,7 +1,9 @@
 ﻿using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
+using Dafda.Configuration;
 using Dafda.Consuming;
+using Dafda.Middleware;
 
 namespace Dafda.Producing
 {
@@ -12,10 +14,16 @@ namespace Dafda.Producing
     {
         private readonly KafkaProducer _kafkaProducer;
         private readonly PayloadDescriptorFactory _payloadDescriptorFactory;
+        private readonly Pipeline _pipeline;
 
-        internal Producer(KafkaProducer kafkaProducer, OutgoingMessageRegistry outgoingMessageRegistry, MessageIdGenerator messageIdGenerator)
+        internal Producer(
+            KafkaProducer kafkaProducer,
+            OutgoingMessageRegistry outgoingMessageRegistry,
+            MessageIdGenerator messageIdGenerator,
+            Pipeline pipeline)
         {
             _kafkaProducer = kafkaProducer;
+            _pipeline = pipeline;
             _payloadDescriptorFactory = new PayloadDescriptorFactory(outgoingMessageRegistry, messageIdGenerator);
         }
 
@@ -37,8 +45,10 @@ namespace Dafda.Producing
         /// <param name="headers">The message headers</param>
         public async Task Produce(object message, Metadata headers)
         {
-            var payloadDescriptor = _payloadDescriptorFactory.Create(message, headers);
-            await _kafkaProducer.Produce(payloadDescriptor);
+            // var payloadDescriptor = _payloadDescriptorFactory.Create(message, headers);
+            // await _kafkaProducer.Produce(payloadDescriptor);
+            
+            await _pipeline.Invoke(new OutgoingMessageContext(message, headers));
         }
 
         /// <summary>
@@ -70,8 +80,13 @@ namespace Dafda.Producing
         /// <param name="headers">Additional message headers</param>
         public async Task Produce(object message, MessageHandlerContext context, Dictionary<string, string> headers)
         {
-            var payloadDescriptor = _payloadDescriptorFactory.Create(message, context, headers);
-            await _kafkaProducer.Produce(payloadDescriptor);
+            var metadata = new Metadata(headers)
+            {
+                CorrelationId = context.CorrelationId,
+                CausationId = context.MessageId
+            };
+            
+            await Produce(message, metadata);
         }
     }
 }

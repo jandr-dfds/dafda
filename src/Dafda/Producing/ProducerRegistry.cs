@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Dafda.Configuration;
-using Microsoft.Extensions.Logging;
+using Dafda.Consuming;
+using Dafda.Middleware;
 
 namespace Dafda.Producing
 {
@@ -27,20 +29,20 @@ namespace Dafda.Producing
             _registrations.Add(producerName, new ProducerFactory(producerName, configuration));
         }
 
-        public Producer Get(string producerName, ILoggerFactory loggerFactory) 
+        public Producer Get(string producerName, IServiceProvider serviceProvider) 
         {
             if (_registrations.TryGetValue(producerName, out var factory))
             {
-                return factory.Create(loggerFactory);
+                return factory.Create(serviceProvider);
             }
 
             return null;
         }
 
-        public Producer GetFor<TClient>(ILoggerFactory loggerFactory)
+        public Producer GetFor<TClient>(IServiceProvider serviceProvider)
         {
             var producerName = GetKeyNameOf<TClient>();
-            return Get(producerName, loggerFactory);
+            return Get(producerName, serviceProvider);
         }
 
         public void Dispose()
@@ -54,9 +56,10 @@ namespace Dafda.Producing
         private class ProducerFactory : IDisposable
         {
             private readonly string _producerName;
-            private readonly Func<ILoggerFactory, KafkaProducer> _kafkaProducerFactory;
+            private readonly Func<IServiceProvider, KafkaProducer> _kafkaProducerFactory;
             private readonly MessageIdGenerator _messageIdGenerator;
             private readonly OutgoingMessageRegistry _messageRegistry;
+            private readonly MiddlewareBuilder<OutgoingMessageContext> _middlewareBuilder;
 
             private KafkaProducer _kafkaProducer;
 
@@ -66,13 +69,21 @@ namespace Dafda.Producing
                 _kafkaProducerFactory = configuration.KafkaProducerFactory;
                 _messageIdGenerator = configuration.MessageIdGenerator;
                 _messageRegistry = configuration.OutgoingMessageRegistry;
+                _middlewareBuilder = configuration.MiddlewareBuilder;
             }
 
-            public Producer Create(ILoggerFactory loggerFactory)
+            public Producer Create(IServiceProvider provider)
             {
-                _kafkaProducer ??= _kafkaProducerFactory(loggerFactory);
+                _kafkaProducer ??= _kafkaProducerFactory(provider);
 
-                var producer = new Producer(_kafkaProducer, _messageRegistry, _messageIdGenerator)
+                var middlewares = _middlewareBuilder
+                    .Build(provider)
+                    .Append(new DispatchMiddleware(_kafkaProducer))
+                    .ToArray();
+
+                var pipeline = new Pipeline(middlewares);
+
+                var producer = new Producer(_kafkaProducer, _messageRegistry, _messageIdGenerator, pipeline)
                 {
                     Name = _producerName
                 };

@@ -1,5 +1,6 @@
 using Dafda.Configuration;
 using Dafda.Producing;
+using Dafda.Serializing;
 using Dafda.Tests.Builders;
 using Dafda.Tests.TestDoubles;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,8 +14,10 @@ namespace Dafda.Tests.Producing
         [Fact]
         public void returns_expected_when_nothing_has_been_registered()
         {
+            var services = new ServiceCollection();
             var sut = new ProducerRegistryBuilder().Build();
-            var result = sut.Get("foo", NullLoggerFactory.Instance);
+
+            var result = sut.Get("foo", services.BuildServiceProvider());
 
             Assert.Null(result);
         }
@@ -22,14 +25,16 @@ namespace Dafda.Tests.Producing
         [Fact]
         public void returns_expected_when_getting_by_a_known_name()
         {
-            var options = new ProducerOptions(new ServiceCollection());
+            var services = new ServiceCollection();
+            services.AddLogging();
+            var options = new ProducerOptions(services);
             options.WithBootstrapServers("dummy");
             var producerConfigurationStub = options.Build();
 
             var sut = new ProducerRegistryBuilder().Build();
             sut.ConfigureProducer("foo", producerConfigurationStub);
 
-            var result = sut.Get("foo", NullLoggerFactory.Instance);
+            var result = sut.Get("foo", services.BuildServiceProvider());
 
             Assert.IsType<Producer>(result);
             Assert.NotNull(result);
@@ -38,14 +43,15 @@ namespace Dafda.Tests.Producing
         [Fact]
         public void returns_expected_when_getting_by_an_unknown_name()
         {
-            var options = new ProducerOptions(new ServiceCollection());
+            var services = new ServiceCollection();
+            var options = new ProducerOptions(services);
             options.WithBootstrapServers("dummy");
             var producerConfigurationStub = options.Build();
 
             var sut = new ProducerRegistryBuilder().Build();
             sut.ConfigureProducer("foo", producerConfigurationStub);
 
-            var result = sut.Get("bar", NullLoggerFactory.Instance);
+            var result = sut.Get("bar", services.BuildServiceProvider());
 
             Assert.Null(result);
         }
@@ -55,7 +61,8 @@ namespace Dafda.Tests.Producing
         {
             var sut = new ProducerRegistryBuilder().Build();
 
-            var options = new ProducerOptions(new ServiceCollection());
+            var services = new ServiceCollection();
+            var options = new ProducerOptions(services);
             options.WithBootstrapServers("dummy");
             var producerConfiguration = options.Build();
             
@@ -77,7 +84,8 @@ namespace Dafda.Tests.Producing
 
             using (var sut = new ProducerRegistryBuilder().Build())
             {
-                var options = new ProducerOptions(new ServiceCollection());
+                var services = new ServiceCollection();
+                var options = new ProducerOptions(services);
                 options.WithBootstrapServers("dummy");
                 options.WithKafkaProducerFactory(_ => spy);
                 var producerConfiguration = options.Build();
@@ -87,7 +95,7 @@ namespace Dafda.Tests.Producing
                     configuration: producerConfiguration
                 );
 
-                sut.Get("foo", NullLoggerFactory.Instance);
+                sut.Get("foo", services.BuildServiceProvider());
             }
 
             Assert.True(spy.WasDisposed);

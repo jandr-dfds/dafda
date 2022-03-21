@@ -91,7 +91,7 @@ namespace Dafda.Tests.Producing
         {
             var expectedValue = "foo-value";
             
-            var spy = new KafkaProducerSpy(new PayloadSerializerStub(expectedValue));
+            var spy = new KafkaProducerSpy();
 
             var sut = A.Producer
                 .With(spy)
@@ -99,6 +99,7 @@ namespace Dafda.Tests.Producing
                     .Register<Message>("foo", "bar", @event => @event.Id)
                     .Build()
                 )
+                .With(new PayloadSerializerStub(expectedValue))
                 .Build();
 
             await sut.Produce(

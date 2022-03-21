@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Confluent.Kafka;
+using Dafda.Configuration;
 using Dafda.Serializing;
 using Microsoft.Extensions.Logging;
 
@@ -43,6 +44,28 @@ namespace Dafda.Producing
                     {
                         Key = key,
                         Value = value
+                    }
+                );
+            }
+            catch (ProduceException<string, string> e)
+            {
+                _logger.LogError(e, "Error publishing message due to: {ErrorReason} ({ErrorCode})", e.Error.Reason, e.Error.Code);
+                throw;
+            }
+        }
+
+        internal virtual async Task InternalProduce(OutgoingRawMessage message)
+        {
+            try
+            {
+                _logger.LogDebug("Producing message with {Key} on {Topic}", message.Key, message.Topic);
+
+                await _innerKafkaProducer.ProduceAsync(
+                    topic: message.Topic,
+                    message: new Message<string, string>
+                    {
+                        Key = message.Key,
+                        Value = message.Data
                     }
                 );
             }

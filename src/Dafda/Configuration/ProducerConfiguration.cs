@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Dafda.Middleware;
 using Dafda.Producing;
-using Microsoft.Extensions.Logging;
 
 namespace Dafda.Configuration
 {
@@ -10,7 +9,7 @@ namespace Dafda.Configuration
     {
         public ProducerConfiguration(IDictionary<string, string> configuration,
             MessageIdGenerator messageIdGenerator,
-            Func<ILoggerFactory, KafkaProducer> kafkaProducerFactory,
+            Func<IServiceProvider, KafkaProducer> kafkaProducerFactory,
             OutgoingMessageRegistry outgoingMessageRegistry,
             MiddlewareBuilder<OutgoingMessageContext> middlewareBuilder)
         {
@@ -23,7 +22,7 @@ namespace Dafda.Configuration
 
         public IDictionary<string, string> KafkaConfiguration { get; }
         public MessageIdGenerator MessageIdGenerator { get; }
-        public Func<ILoggerFactory, KafkaProducer> KafkaProducerFactory { get; }
+        public Func<IServiceProvider, KafkaProducer> KafkaProducerFactory { get; }
         public OutgoingMessageRegistry OutgoingMessageRegistry { get; }
         public MiddlewareBuilder<OutgoingMessageContext> MiddlewareBuilder { get; }
     }

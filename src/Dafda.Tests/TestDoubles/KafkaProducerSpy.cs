@@ -33,6 +33,15 @@ namespace Dafda.Tests.TestDoubles
             return Task.CompletedTask;
         }
 
+        internal override Task InternalProduce(OutgoingRawMessage message)
+        {
+            Topic = message.Topic;
+            Key = message.Key;
+            Value = message.Data;
+
+            return Task.CompletedTask;
+        }
+
         public override void Dispose()
         {
             base.Dispose();

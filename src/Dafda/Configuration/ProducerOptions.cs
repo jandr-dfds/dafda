@@ -20,7 +20,7 @@ namespace Dafda.Configuration
 
         private ConfigurationSource _configurationSource = ConfigurationSource.Null;
         private MessageIdGenerator _messageIdGenerator = MessageIdGenerator.Default;
-        private Func<ILoggerFactory, KafkaProducer> _kafkaProducerFactory;
+        private Func<IServiceProvider, KafkaProducer> _kafkaProducerFactory;
         private readonly MiddlewareBuilder<OutgoingMessageContext> _middlewareBuilder;
 
         internal ProducerOptions(IServiceCollection services)
@@ -104,7 +104,7 @@ namespace Dafda.Configuration
             WithConfiguration(ConfigurationKeys.BootstrapServers, bootstrapServers);
         }
 
-        internal void WithKafkaProducerFactory(Func<ILoggerFactory, KafkaProducer> inlineFactory)
+        internal void WithKafkaProducerFactory(Func<IServiceProvider, KafkaProducer> inlineFactory)
         {
             _kafkaProducerFactory = inlineFactory;
         }
@@ -192,6 +192,11 @@ namespace Dafda.Configuration
 
         internal ProducerConfiguration Build()
         {
+            _middlewareBuilder
+                .Register(_ => new PayloadDescriptionMiddleware(_outgoingMessageRegistry, _messageIdGenerator))
+                .Register(_ => new SerializationMiddleware(_topicPayloadSerializerRegistry))
+                ;
+
             var configurations = ConfigurationBuilder
                 .ForProducer
                 .WithNamingConventions(_namingConventions)
@@ -199,7 +204,11 @@ namespace Dafda.Configuration
                 .WithConfigurations(_configurations)
                 .Build();
 
-            _kafkaProducerFactory ??= loggerFactory => new KafkaProducer(loggerFactory, configurations, _topicPayloadSerializerRegistry);
+            _kafkaProducerFactory ??= provider =>
+            {
+                var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
+                return new KafkaProducer(loggerFactory, configurations, _topicPayloadSerializerRegistry);
+            };
 
             return new ProducerConfiguration(
                 configurations,
