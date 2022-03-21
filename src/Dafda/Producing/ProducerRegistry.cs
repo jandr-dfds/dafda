@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dafda.Configuration;
-using Dafda.Consuming;
 using Dafda.Middleware;
 
 namespace Dafda.Producing
@@ -57,8 +56,6 @@ namespace Dafda.Producing
         {
             private readonly string _producerName;
             private readonly Func<IServiceProvider, KafkaProducer> _kafkaProducerFactory;
-            private readonly MessageIdGenerator _messageIdGenerator;
-            private readonly OutgoingMessageRegistry _messageRegistry;
             private readonly MiddlewareBuilder<OutgoingMessageContext> _middlewareBuilder;
 
             private KafkaProducer _kafkaProducer;
@@ -67,8 +64,6 @@ namespace Dafda.Producing
             {
                 _producerName = producerName;
                 _kafkaProducerFactory = configuration.KafkaProducerFactory;
-                _messageIdGenerator = configuration.MessageIdGenerator;
-                _messageRegistry = configuration.OutgoingMessageRegistry;
                 _middlewareBuilder = configuration.MiddlewareBuilder;
             }
 
@@ -83,7 +78,7 @@ namespace Dafda.Producing
 
                 var pipeline = new Pipeline(middlewares);
 
-                var producer = new Producer(_kafkaProducer, _messageRegistry, _messageIdGenerator, pipeline)
+                var producer = new Producer(pipeline)
                 {
                     Name = _producerName
                 };

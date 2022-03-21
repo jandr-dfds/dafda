@@ -1,7 +1,6 @@
 ﻿using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
-using Dafda.Configuration;
 using Dafda.Consuming;
 using Dafda.Middleware;
 
@@ -12,19 +11,11 @@ namespace Dafda.Producing
     /// </summary>
     public sealed class Producer
     {
-        private readonly KafkaProducer _kafkaProducer;
-        private readonly PayloadDescriptorFactory _payloadDescriptorFactory;
         private readonly Pipeline _pipeline;
 
-        internal Producer(
-            KafkaProducer kafkaProducer,
-            OutgoingMessageRegistry outgoingMessageRegistry,
-            MessageIdGenerator messageIdGenerator,
-            Pipeline pipeline)
+        internal Producer(Pipeline pipeline)
         {
-            _kafkaProducer = kafkaProducer;
             _pipeline = pipeline;
-            _payloadDescriptorFactory = new PayloadDescriptorFactory(outgoingMessageRegistry, messageIdGenerator);
         }
 
         internal string Name { get; init; } = "__Default Producer__";
@@ -45,9 +36,6 @@ namespace Dafda.Producing
         /// <param name="headers">The message headers</param>
         public async Task Produce(object message, Metadata headers)
         {
-            // var payloadDescriptor = _payloadDescriptorFactory.Create(message, headers);
-            // await _kafkaProducer.Produce(payloadDescriptor);
-            
             await _pipeline.Invoke(new OutgoingMessageContext(message, headers));
         }
 

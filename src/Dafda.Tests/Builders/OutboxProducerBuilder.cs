@@ -1,4 +1,7 @@
+using System.Linq;
+using Dafda.Middleware;
 using Dafda.Producing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Dafda.Tests.Builders
 {
@@ -14,7 +17,17 @@ namespace Dafda.Tests.Builders
 
         public OutboxProducer Build()
         {
-            return new OutboxProducer(_kafkaProducer);
+            var serviceCollection = new ServiceCollection();
+            var middlewareBuilder = new MiddlewareBuilder<OutgoingRawMessageContext>(serviceCollection);
+            middlewareBuilder.Register(_ => new DispatchMiddleware(_kafkaProducer));
+
+            var middlewares = middlewareBuilder
+                .Build(serviceCollection.BuildServiceProvider())
+                .ToArray();
+
+            var pipeline = new Pipeline(middlewares);
+
+            return new OutboxProducer(pipeline);
         }
 
         public static implicit operator OutboxProducer(OutboxProducerBuilder builder)

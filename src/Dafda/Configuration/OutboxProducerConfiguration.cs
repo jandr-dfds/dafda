@@ -1,16 +1,14 @@
-using System;
-using Dafda.Producing;
-using Microsoft.Extensions.Logging;
+using Dafda.Middleware;
 
 namespace Dafda.Configuration
 {
     internal class OutboxProducerConfiguration
     {
-        public OutboxProducerConfiguration(Func<ILoggerFactory, KafkaProducer> kafkaProducerFactory)
+        public OutboxProducerConfiguration(MiddlewareBuilder<OutgoingRawMessageContext> middlewareBuilder)
         {
-            KafkaProducerFactory = kafkaProducerFactory;
+            MiddlewareBuilder = middlewareBuilder;
         }
 
-        public Func<ILoggerFactory, KafkaProducer> KafkaProducerFactory { get; }
+        public MiddlewareBuilder<OutgoingRawMessageContext> MiddlewareBuilder { get; }
     }
 }

@@ -1,5 +1,4 @@
 using System.Linq;
-using Dafda.Configuration;
 using Dafda.Middleware;
 using Dafda.Producing;
 using Dafda.Serializing;
@@ -10,7 +9,7 @@ namespace Dafda.Tests.Builders
     internal class ProducerBuilder
     {
         private KafkaProducer _kafkaProducer;
-        private OutgoingMessageRegistry _outgoingMessageRegistry = new OutgoingMessageRegistry();
+        private OutgoingMessageRegistry _outgoingMessageRegistry = new();
         private MessageIdGenerator _messageIdGenerator = MessageIdGenerator.Default;
         private IPayloadSerializer _payloadSerializer = new DefaultPayloadSerializer();
 
@@ -32,29 +31,28 @@ namespace Dafda.Tests.Builders
             return this;
         }
 
-        public ProducerBuilder With(IPayloadSerializer IPayloadSerializer)
+        public ProducerBuilder With(IPayloadSerializer payloadSerializer)
         {
-            _payloadSerializer = IPayloadSerializer;
+            _payloadSerializer = payloadSerializer;
             return this;
         }
 
         public Producer Build()
         {
             var serviceCollection = new ServiceCollection();
-            var _middlewareBuilder = new MiddlewareBuilder<OutgoingMessageContext>(serviceCollection);
-            _middlewareBuilder
+            var middlewareBuilder = new MiddlewareBuilder<OutgoingMessageContext>(serviceCollection);
+            middlewareBuilder
                 .Register(_ => new PayloadDescriptionMiddleware(_outgoingMessageRegistry, _messageIdGenerator))
-                .Register(_ => new SerializationMiddleware(new TopicPayloadSerializerRegistry(() => _payloadSerializer)))
-                ;
+                .Register(_ => new SerializationMiddleware(new TopicPayloadSerializerRegistry(() => _payloadSerializer)));
 
-            var middlewares = _middlewareBuilder
+            var middlewares = middlewareBuilder
                 .Build(serviceCollection.BuildServiceProvider())
                 .Append(new DispatchMiddleware(_kafkaProducer))
                 .ToArray();
 
             var pipeline = new Pipeline(middlewares);
 
-            return new Producer(_kafkaProducer, _outgoingMessageRegistry, _messageIdGenerator, pipeline);
+            return new Producer(pipeline);
         }
 
         public static implicit operator Producer(ProducerBuilder builder)

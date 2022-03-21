@@ -18,10 +18,11 @@ namespace Dafda.Configuration
         private readonly OutgoingMessageRegistry _outgoingMessageRegistry = new();
         private readonly TopicPayloadSerializerRegistry _topicPayloadSerializerRegistry = new(() => new DefaultPayloadSerializer());
 
+        private readonly MiddlewareBuilder<OutgoingMessageContext> _middlewareBuilder;
+
         private ConfigurationSource _configurationSource = ConfigurationSource.Null;
         private MessageIdGenerator _messageIdGenerator = MessageIdGenerator.Default;
         private Func<IServiceProvider, KafkaProducer> _kafkaProducerFactory;
-        private readonly MiddlewareBuilder<OutgoingMessageContext> _middlewareBuilder;
 
         internal ProducerOptions(IServiceCollection services)
         {

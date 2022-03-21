@@ -1,4 +1,5 @@
 using System;
+using Dafda.Middleware;
 using Dafda.Outbox;
 using Dafda.Producing;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,8 +54,9 @@ namespace Dafda.Configuration
             {
                 var outboxUnitOfWorkFactory = provider.GetRequiredService<IOutboxUnitOfWorkFactory>();
                 var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
-                var kafkaProducer = configuration.KafkaProducerFactory(loggerFactory);
-                var producer = new OutboxProducer(kafkaProducer);
+                var middleware = configuration.MiddlewareBuilder.Build(provider);
+                var pipeline = new Pipeline(middleware);
+                var producer = new OutboxProducer(pipeline);
                 var outboxDispatcher = new OutboxDispatcher(loggerFactory, outboxUnitOfWorkFactory, producer);
 
                 return new OutboxDispatcherHostedService(outboxListener, outboxDispatcher);

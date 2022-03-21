@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using Dafda.Middleware;
 using Dafda.Outbox;
 using Dafda.Producing;
-using Dafda.Serializing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -16,17 +15,18 @@ namespace Dafda.Configuration
     {
         private readonly IDictionary<string, string> _configurations = new Dictionary<string, string>();
         private readonly NamingConventions _namingConventions = new();
-        private readonly MessageIdGenerator _messageIdGenerator = MessageIdGenerator.Default;
-        private readonly TopicPayloadSerializerRegistry _topicPayloadSerializerRegistry = new(() => new DefaultPayloadSerializer());
-
-        private ConfigurationSource _configurationSource = ConfigurationSource.Null;
-        private Func<ILoggerFactory, KafkaProducer> _kafkaProducerFactory;
 
         private readonly IServiceCollection _services;
+        private readonly MiddlewareBuilder<OutgoingRawMessageContext> _middlewareBuilder;
+
+        private ConfigurationSource _configurationSource = ConfigurationSource.Null;
+        private Func<IServiceProvider, KafkaProducer> _kafkaProducerFactory;
+
 
         internal OutboxProducerOptions(IServiceCollection services)
         {
             _services = services;
+            _middlewareBuilder = new MiddlewareBuilder<OutgoingRawMessageContext>(services);
         }
 
         internal IOutboxListener OutboxListener { get; private set; }
@@ -107,7 +107,7 @@ namespace Dafda.Configuration
             WithConfiguration(ConfigurationKeys.BootstrapServers, bootstrapServers);
         }
 
-        internal void WithKafkaProducerFactory(Func<ILoggerFactory, KafkaProducer> inlineFactory)
+        internal void WithKafkaProducerFactory(Func<IServiceProvider, KafkaProducer> inlineFactory)
         {
             _kafkaProducerFactory = inlineFactory;
         }
@@ -148,9 +148,15 @@ namespace Dafda.Configuration
                 .WithConfigurations(_configurations)
                 .Build();
 
-            _kafkaProducerFactory ??= loggerFactory => new KafkaProducer(loggerFactory, configurations);
+            _kafkaProducerFactory ??= provider =>
+            {
+                var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
+                return new KafkaProducer(loggerFactory, configurations);
+            };
 
-            return new OutboxProducerConfiguration(_kafkaProducerFactory);
+            _middlewareBuilder.Register(provider => new DispatchMiddleware(_kafkaProducerFactory(provider)));
+
+            return new OutboxProducerConfiguration(_middlewareBuilder);
         }
 
         private class DefaultConfigurationSource : ConfigurationSource

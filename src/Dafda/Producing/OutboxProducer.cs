@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Dafda.Middleware;
 using Dafda.Outbox;
 
 namespace Dafda.Producing
@@ -8,11 +9,11 @@ namespace Dafda.Producing
     /// </summary>
     internal sealed class OutboxProducer
     {
-        private readonly KafkaProducer _kafkaProducer;
+        private readonly Pipeline _pipeline;
 
-        internal OutboxProducer(KafkaProducer kafkaProducer)
+        internal OutboxProducer(Pipeline pipeline)
         {
-            _kafkaProducer = kafkaProducer;
+            _pipeline = pipeline;
         }
 
         /// <summary>
@@ -21,7 +22,7 @@ namespace Dafda.Producing
         /// <param name="entry">The outbox message</param>
         public async Task Produce(OutboxEntry entry)
         {
-            await _kafkaProducer.Produce(new OutgoingRawMessage(entry.Topic, entry.Key, entry.Payload));
+            await _pipeline.Invoke(new OutgoingRawMessageContext(new OutgoingRawMessage(entry.Topic, entry.Key, entry.Payload)));
         }
     }
 }
