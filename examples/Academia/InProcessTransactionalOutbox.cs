@@ -6,39 +6,41 @@ using Academia.Domain;
 using Academia.Infrastructure.Persistence;
 using Dafda.Configuration;
 using Dafda.Outbox;
-using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Academia
 {
     public static class InProcessOutboxMessaging
     {
-        public static void AddInProcessOutboxMessaging(this IServiceCollection services, IConfiguration configuration)
+        private const string StudentsTopic = "academia.students";
+
+        public static void AddInProcessOutboxMessaging(this WebApplicationBuilder builder)
         {
-            services.AddTransient<ITransactionalOutbox, TransactionalOutbox>();
+            builder.Services.AddTransient<ITransactionalOutbox, TransactionalOutbox>();
 
             // configure messaging: consumer
-            services.AddConsumer(options =>
+            builder.Services.AddConsumer(options =>
             {
                 // kafka consumer settings
-                options.WithConfigurationSource(configuration);
+                options.WithConfigurationSource(builder.Configuration);
                 options.WithEnvironmentStyle("DEFAULT_KAFKA", "ACADEMIA_KAFKA");
 
                 // register message handlers
-                options.RegisterMessageHandler<StudentEnrolled, StudentEnrolledHandler>("academia.students", "student-enrolled");
-                options.RegisterMessageHandler<StudentChangedEmail, StudentChangedEmailHandler>("academia.students", "student-changed-email");
+                options.RegisterMessageHandler<StudentEnrolled, StudentEnrolledHandler>(StudentsTopic, StudentEnrolled.MessageType);
+                options.RegisterMessageHandler<StudentChangedEmail, StudentChangedEmailHandler>(StudentsTopic, StudentChangedEmail.MessageType);
             });
 
             // register the outbox in-process notification mechanism
             var outboxNotification = new OutboxNotification(TimeSpan.FromSeconds(5));
-            services.AddSingleton(provider => outboxNotification); // register to dispose
+            builder.Services.AddSingleton(_ => outboxNotification); // register to dispose
 
             // configure the outbox pattern using Dafda
-            services.AddOutbox(options =>
+            builder.Services.AddOutbox(options =>
             {
                 // register outgoing (through the outbox) messages
-                options.Register<StudentEnrolled>("academia.students", "student-enrolled", @event => @event.StudentId);
-                options.Register<StudentChangedEmail>("academia.students", "student-changed-email", @event => @event.StudentId);
+                options.Register<StudentEnrolled>(StudentsTopic, StudentEnrolled.MessageType, @event => @event.StudentId);
+                options.Register<StudentChangedEmail>(StudentsTopic, StudentChangedEmail.MessageType, @event => @event.StudentId);
 
                 // include outbox persistence
                 options.WithOutboxEntryRepository<OutboxEntryRepository>();
@@ -48,10 +50,10 @@ namespace Academia
             });
 
             // configure the outbox producer
-            services.AddOutboxProducer(options =>
+            builder.Services.AddOutboxProducer(options =>
             {
                 // kafka producer settings
-                options.WithConfigurationSource(configuration);
+                options.WithConfigurationSource(builder.Configuration);
                 options.WithEnvironmentStyle("DEFAULT_KAFKA", "ACADEMIA_KAFKA");
 
                 // include outbox unit of work (so we can read/update the outbox table)
@@ -91,7 +93,7 @@ namespace Academia
                     outboxNotifier = await _outboxQueue.Enqueue(_domainEvents.Events);
 
                     await _dbContext.SaveChangesAsync(cancellationToken);
-                    transaction.Commit();
+                    await transaction.CommitAsync(cancellationToken);
                 }
 
                 if (outboxNotifier != null)

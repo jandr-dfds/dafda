@@ -6,35 +6,37 @@ using Academia.Domain;
 using Academia.Infrastructure.Persistence;
 using Dafda.Configuration;
 using Dafda.Outbox;
-using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Academia
 {
     public static class OutOfBandOutboxMessaging
     {
-        public static void AddOutOfBandOutboxMessaging(this IServiceCollection services, IConfiguration configuration)
+        private const string StudentsTopic = "academia.students";
+
+        public static void AddOutOfBandOutboxMessaging(this WebApplicationBuilder builder)
         {
-            services.AddTransient<ITransactionalOutbox, TransactionalOutbox>();
+            builder.Services.AddTransient<ITransactionalOutbox, TransactionalOutbox>();
 
             // configure messaging: consumer
-            services.AddConsumer(options =>
+            builder.Services.AddConsumer(options =>
             {
                 // kafka consumer settings
-                options.WithConfigurationSource(configuration);
+                options.WithConfigurationSource(builder.Configuration);
                 options.WithEnvironmentStyle("DEFAULT_KAFKA", "ACADEMIA_KAFKA");
 
                 // register message handlers
-                options.RegisterMessageHandler<StudentEnrolled, StudentEnrolledHandler>("academia.students", "student-enrolled");
-                options.RegisterMessageHandler<StudentChangedEmail, StudentChangedEmailHandler>("academia.students", "student-changed-email");
+                options.RegisterMessageHandler<StudentEnrolled, StudentEnrolledHandler>(StudentsTopic, StudentEnrolled.MessageType);
+                options.RegisterMessageHandler<StudentChangedEmail, StudentChangedEmailHandler>(StudentsTopic, StudentChangedEmail.MessageType);
             });
 
             // configure the outbox pattern using Dafda
-            services.AddOutbox(options =>
+            builder.Services.AddOutbox(options =>
             {
                 // register outgoing (through the outbox) messages
-                options.Register<StudentEnrolled>("academia.students", "student-enrolled", @event => @event.StudentId);
-                options.Register<StudentChangedEmail>("academia.students", "student-changed-email", @event => @event.StudentId);
+                options.Register<StudentEnrolled>(StudentsTopic, StudentEnrolled.MessageType, @event => @event.StudentId);
+                options.Register<StudentChangedEmail>(StudentsTopic, StudentChangedEmail.MessageType, @event => @event.StudentId);
 
                 // include outbox persistence
                 options.WithOutboxEntryRepository<OutboxEntryRepository>();
@@ -65,18 +67,16 @@ namespace Academia
 
             public async Task Execute(Func<Task> action, CancellationToken cancellationToken)
             {
-                await using (var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken))
-                {
-                    await action();
+                await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+                await action();
 
-                    await _outboxQueue.Enqueue(_domainEvents.Events);
+                await _outboxQueue.Enqueue(_domainEvents.Events);
 
-                    // NOTE: we don't use the built-in notification mechanism,
-                    // instead we rely on postgres' LISTEN/NOTIFY and a database trigger
+                // NOTE: we don't use the built-in notification mechanism,
+                // instead we rely on postgres' LISTEN/NOTIFY and a database trigger
 
-                    await _dbContext.SaveChangesAsync(cancellationToken);
-                    transaction.Commit();
-                }
+                await _dbContext.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
             }
         }
     }

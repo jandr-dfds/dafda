@@ -1,5 +1,5 @@
-﻿#define NOTIFY_INPROGRESS
-#define NOTIFY_POSTGRES
+﻿// #define NOTIFY_INPROGRESS
+// #define NOTIFY_POSTGRES
 
 using System;
 using Academia;
@@ -13,19 +13,19 @@ using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Events;
 
-const string ApplicationName = "InProcessOutbox";
+const string applicationName = "InProcessOutbox";
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Debug()
     .MinimumLevel.Override("Dafda", LogEventLevel.Debug)
     .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
     .Enrich.FromLogContext()
-    .WriteTo.Console(outputTemplate: $"{ApplicationName.ToUpper()} [{{Timestamp:HH:mm:ss}} {{Level:u3}}] {{Message:lj}}{{NewLine}}{{Exception}}")
+    .WriteTo.Console(outputTemplate: $"{applicationName.ToUpper()} [{{Timestamp:HH:mm:ss}} {{Level:u3}}] {{Message:lj}}{{NewLine}}{{Exception}}")
     .CreateLogger();
 
 try
 {
-    Log.Information($"Starting {ApplicationName} application");
+    Log.Information($"Starting {applicationName} application");
 
     var builder = WebApplication.CreateBuilder();
     builder.Host.UseSerilog(Log.Logger);
@@ -44,11 +44,11 @@ try
 
     // configure messaging
 #if NOTIFY_INPROGRESS
-    builder.Services.AddInProcessOutboxMessaging(builder.Configuration);
+    builder.AddInProcessOutboxMessaging();
 #elif NOTIFY_POSTGRES
-    builder.Services.AddPostgresNotifyOutboxMessaging(builder.Configuration);
+    builder.AddPostgresNotifyOutboxMessaging();
 #else
-    builder.Services.AddOutOfBandOutboxMessaging(builder.Configuration);
+    builder.AddOutOfBandOutboxMessaging();
 #endif
 
     // configure web api
@@ -61,11 +61,10 @@ try
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, $"{ApplicationName} application terminated unexpectedly");
+    Log.Fatal(ex, $"{applicationName} application terminated unexpectedly");
     return 1;
 }
 finally
 {
     Log.CloseAndFlush();
 }
-

@@ -6,38 +6,39 @@ using Academia.Domain;
 using Academia.Infrastructure.Persistence;
 using Dafda.Configuration;
 using Dafda.Outbox;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Academia
 {
     public static class PostgresNotifyOutboxMessaging
     {
+        private const string StudentsTopic = "academia.students";
         private const string DafdaOutboxPostgresChannel = "dafda";
 
-        public static void AddPostgresNotifyOutboxMessaging(this IServiceCollection services, IConfiguration configuration)
+        public static void AddPostgresNotifyOutboxMessaging(this WebApplicationBuilder builder)
         {
-            services.AddTransient<ITransactionalOutbox, TransactionalOutbox>();
+            builder.Services.AddTransient<ITransactionalOutbox, TransactionalOutbox>();
 
             // configure messaging: consumer
-            services.AddConsumer(options =>
+            builder.Services.AddConsumer(options =>
             {
                 // kafka consumer settings
-                options.WithConfigurationSource(configuration);
+                options.WithConfigurationSource(builder.Configuration);
                 options.WithEnvironmentStyle("DEFAULT_KAFKA", "ACADEMIA_KAFKA");
 
                 // register message handlers
-                options.RegisterMessageHandler<StudentEnrolled, StudentEnrolledHandler>("academia.students", "student-enrolled");
-                options.RegisterMessageHandler<StudentChangedEmail, StudentChangedEmailHandler>("academia.students", "student-changed-email");
+                options.RegisterMessageHandler<StudentEnrolled, StudentEnrolledHandler>(StudentsTopic, StudentEnrolled.MessageType);
+                options.RegisterMessageHandler<StudentChangedEmail, StudentChangedEmailHandler>(StudentsTopic, StudentChangedEmail.MessageType);
             });
 
             // configure the outbox pattern using Dafda
-            services.AddOutbox(options =>
+            builder.Services.AddOutbox(options =>
             {
                 // register outgoing (through the outbox) messages
-                options.Register<StudentEnrolled>("academia.students", "student-enrolled", @event => @event.StudentId);
-                options.Register<StudentChangedEmail>("academia.students", "student-changed-email", @event => @event.StudentId);
+                options.Register<StudentEnrolled>(StudentsTopic, StudentEnrolled.MessageType, @event => @event.StudentId);
+                options.Register<StudentChangedEmail>(StudentsTopic, StudentChangedEmail.MessageType, @event => @event.StudentId);
 
                 // include outbox persistence
                 options.WithOutboxEntryRepository<OutboxEntryRepository>();
@@ -68,20 +69,20 @@ namespace Academia
 
             public async Task Execute(Func<Task> action, CancellationToken cancellationToken)
             {
-                await using (var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken))
-                {
-                    await action();
+                await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-                    await _outboxQueue.Enqueue(_domainEvents.Events);
+                await action();
 
-                    // NOTE: we don't use the built-in notification mechanism,
-                    // instead we rely on postgres' LISTEN/NOTIFY
-                    await _dbContext.Database.ExecuteSqlRawAsync($"NOTIFY {DafdaOutboxPostgresChannel};", cancellationToken);
+                await _outboxQueue.Enqueue(_domainEvents.Events);
 
-                    await _dbContext.SaveChangesAsync(cancellationToken);
-                    transaction.Commit();
-                }
+                // NOTE: we don't use the built-in notification mechanism,
+                // instead we rely on postgres' LISTEN/NOTIFY
+                await _dbContext.Database.ExecuteSqlRawAsync($"NOTIFY {DafdaOutboxPostgresChannel};", cancellationToken);
+
+                await _dbContext.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
             }
         }
+
     }
 }
