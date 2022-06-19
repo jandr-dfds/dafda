@@ -1,0 +1,23 @@
+
+GET http://localhost:5000/api/students/b24b7a87-6e48-4b6e-929a-73a59bcdb9a4
+
+###
+
+POST http://localhost:5000/api/students/~/enroll
+Content-Type: application/json
+
+{
+    "name": "Thomas Fischer",
+    "email": "thofisch@gmail.com",
+    "address": "Mosegårdsvej 131, 2820 Gentofte"
+}
+
+###
+
+POST http://localhost:5000/api/students/b24b7a87-6e48-4b6e-929a-73a59bcdb9a4/update-email
+Content-Type: application/json
+
+{
+    "email": "a@jupeter.io"
+}
+

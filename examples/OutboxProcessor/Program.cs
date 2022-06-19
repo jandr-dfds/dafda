@@ -1,77 +1,93 @@
 ﻿using System;
-using System.Threading.Tasks;
 using Dafda.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OutboxProcessor;
 using Serilog;
 using Serilog.Events;
 
-namespace OutboxProcessor
+const string applicationName = "Sample.Outbox.Processor";
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .MinimumLevel.Override("Dafda", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Console(outputTemplate: $"{applicationName.ToUpper()} [{{Timestamp:HH:mm:ss}} {{Level:u3}}] {{Message:lj}}{{NewLine}}{{Exception}}")
+    .CreateLogger();
+
+try
 {
-    public static class Program
-    {
-        private const string ApplicationName = "Sample.Outbox.Processor";
+    Log.Information($"Starting {applicationName} application");
 
-        public static async Task<int> Main(string[] args)
+    await Host.CreateDefaultBuilder(args)
+        .UseSerilog(Log.Logger)
+        .ConfigureHostConfiguration(config => { config.AddEnvironmentVariables(); })
+        .ConfigureServices((hostContext, services) =>
         {
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .MinimumLevel.Override("Dafda", LogEventLevel.Warning)
-                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-                .Enrich.FromLogContext()
-                .WriteTo.Console(outputTemplate: $"{ApplicationName.ToUpper()} [{{Timestamp:HH:mm:ss}} {{Level:u3}}] {{Message:lj}}{{NewLine}}{{Exception}}")
-                .CreateLogger();
+            var configuration = hostContext.Configuration;
 
-            try
+            // configure persistence (Postgres)
+            var connectionString = configuration["SAMPLE_OUTBOX_PROCESSOR_CONNECTION_STRING"];
+            var channel = configuration["SAMPLE_OUTBOX_PROCESSOR_CHANNEL_NAME"];
+
+            var outboxNotification = new PostgresListener(connectionString, channel, TimeSpan.FromSeconds(30));
+
+            services.AddSingleton(provider => outboxNotification); // register to dispose
+
+            services.AddOutboxProducer(options =>
             {
-                Log.Information($"Starting {ApplicationName} application");
+                // configuration settings
+                options.WithConfigurationSource(configuration);
+                options.WithEnvironmentStyle("DEFAULT_KAFKA");
 
-                await CreateHostBuilder()
-                    .Build()
-                    .RunAsync();
+                // include outbox (polling publisher)
+                options.WithUnitOfWorkFactory(_ => new OutboxUnitOfWorkFactory(connectionString));
+                options.WithListener(outboxNotification);
+            });
+        })
+        .Build()
+        .RunAsync();
 
-                return 0;
-            }
-            catch (Exception ex)
-            {
-                Log.Fatal(ex, $"{ApplicationName} application terminated unexpectedly");
-                return 1;
-            }
-            finally
-            {
-                Log.CloseAndFlush();
-            }
-        }
+    return 0;
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, $"{applicationName} application terminated unexpectedly");
+    return 1;
+}
+finally
+{
+    Log.CloseAndFlush();
+}
 
-        private static IHostBuilder CreateHostBuilder()
+static IHostBuilder CreateHostBuilder()
+{
+    return new HostBuilder()
+        .UseSerilog()
+        .ConfigureHostConfiguration(config => { config.AddEnvironmentVariables(); })
+        .ConfigureServices((hostContext, services) =>
         {
-            return new HostBuilder()
-                .UseSerilog()
-                .ConfigureHostConfiguration(config => { config.AddEnvironmentVariables(); })
-                .ConfigureServices((hostContext, services) =>
-                {
-                    var configuration = hostContext.Configuration;
+            var configuration = hostContext.Configuration;
 
-                    // configure persistence (Postgres)
-                    var connectionString = configuration["SAMPLE_OUTBOX_PROCESSOR_CONNECTION_STRING"];
-                    var channel = configuration["SAMPLE_OUTBOX_PROCESSOR_CHANNEL_NAME"];
+            // configure persistence (Postgres)
+            var connectionString = configuration["SAMPLE_OUTBOX_PROCESSOR_CONNECTION_STRING"];
+            var channel = configuration["SAMPLE_OUTBOX_PROCESSOR_CHANNEL_NAME"];
 
-                    var outboxNotification = new PostgresListener(connectionString, channel, TimeSpan.FromSeconds(30));
+            var outboxNotification = new PostgresListener(connectionString, channel, TimeSpan.FromSeconds(30));
 
-                    services.AddSingleton(provider => outboxNotification); // register to dispose
+            services.AddSingleton(provider => outboxNotification); // register to dispose
 
-                    services.AddOutboxProducer(options =>
-                    {
-                        // configuration settings
-                        options.WithConfigurationSource(configuration);
-                        options.WithEnvironmentStyle("DEFAULT_KAFKA");
+            services.AddOutboxProducer(options =>
+            {
+                // configuration settings
+                options.WithConfigurationSource(configuration);
+                options.WithEnvironmentStyle("DEFAULT_KAFKA");
 
-                        // include outbox (polling publisher)
-                        options.WithUnitOfWorkFactory(_ => new OutboxUnitOfWorkFactory(connectionString));
-                        options.WithListener(outboxNotification);
-                    });
-                });
-        }
-    }
+                // include outbox (polling publisher)
+                options.WithUnitOfWorkFactory(_ => new OutboxUnitOfWorkFactory(connectionString));
+                options.WithListener(outboxNotification);
+            });
+        });
 }
