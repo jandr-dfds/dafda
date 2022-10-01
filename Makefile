@@ -22,6 +22,10 @@ restore: ; $(info > Restoring dependencies...) @ ## restore project dependencies
 build: ; $(info > Building...) @ ## build the project
 	@cd src && dotnet build --configuration $(CONFIGURATION)
 
+.PHONY: test
+test: ; $(info > Running tests...) @ ## run the test suite
+	@dotnet test src/Dafda.sln
+
 .PHONY: package
 package: clean restore build ; $(info > Packing $(PACKAGE)...) @ ## create the nuget package
 	@cd src && dotnet pack --no-build --configuration $(CONFIGURATION) \
