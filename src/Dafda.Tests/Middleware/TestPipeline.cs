@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Dafda.Middleware;
 using Dafda.Tests.TestDoubles;
@@ -13,10 +11,10 @@ public class TestPipeline
     [Fact]
     public async Task can_invoke_middleware_for_same_context_type()
     {
-        var spy = new ContextRecorder();
+        var spy = MiddlewareFactory.CreateContextSpy();
         var pipeline = new Pipeline(
-            FakeMiddleware<SomeContext>.WithPreAction(spy.Record),
-            FakeMiddleware<SomeContext>.WithPreAction(spy.Record)
+            spy.CreateMiddleware<SomeContext>(),
+            spy.CreateMiddleware<SomeContext>()
         );
 
         var startingContext = new SomeContext();
@@ -32,11 +30,11 @@ public class TestPipeline
     [Fact]
     public async Task can_invoke_middleware_when_changing_context_type()
     {
-        var spy = new ContextRecorder();
+        var spy = MiddlewareFactory.CreateContextSpy();
         var someOtherContext = new SomeOtherContext();
         var pipeline = new Pipeline(
-            new FakeMiddleware<SomeContext, SomeOtherContext>(_ => someOtherContext, spy.Record),
-            FakeMiddleware<SomeOtherContext>.WithPreAction(spy.Record)
+            spy.CreateMiddleware<SomeContext, SomeOtherContext>(_ => someOtherContext),
+            spy.CreateMiddleware<SomeOtherContext>()
         );
 
         var startingContext = new SomeContext();
@@ -47,23 +45,6 @@ public class TestPipeline
             startingContext,
             someOtherContext,
         }, spy.RecordedContexts);
-    }
-
-    private class ContextRecorder
-    {
-        private readonly IList<object> _recordedContexts = new List<object>();
-
-        public void Record<T>(T context)
-        {
-            if (context == null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
-            _recordedContexts.Add(context);
-        }
-
-        public IEnumerable<object> RecordedContexts => _recordedContexts;
     }
 
     private class SomeContext

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Dafda.Middleware;
 
@@ -77,5 +78,45 @@ internal static class MiddlewareFactory
     /// </summary>
     private class MiddlewareWithoutImplementation : IMiddleware
     {
+    }
+
+    public static MiddlewareContextSpy CreateContextSpy()
+    {
+        return new MiddlewareContextSpy();
+    }
+
+    public class MiddlewareContextSpy
+    {
+        private readonly IList<object> _recordedContexts = new List<object>();
+
+        public IMiddleware<TContext, TContext> CreateMiddleware<TContext>()
+        {
+            return CreateMiddleware<TContext, TContext>(context => context);
+        }
+
+        public IMiddleware<TInContext, TOutContext> CreateMiddleware<TInContext, TOutContext>(Func<TInContext, TOutContext> transformContext)
+        {
+            return new Spy<TInContext, TOutContext>(_recordedContexts, transformContext);
+        }
+
+        public IEnumerable<object> RecordedContexts => _recordedContexts;
+
+        private class Spy<TInContext, TOutContext> : IMiddleware<TInContext, TOutContext>
+        {
+            private readonly IList<object> _recordedContexts;
+            private readonly Func<TInContext, TOutContext> _transformContext;
+
+            public Spy(IList<object> recordedContexts, Func<TInContext, TOutContext> transformContext)
+            {
+                _recordedContexts = recordedContexts;
+                _transformContext = transformContext;
+            }
+
+            public Task Invoke(TInContext context, Func<TOutContext, Task> next)
+            {
+                _recordedContexts.Add(context);
+                return next(_transformContext(context));
+            }
+        }
     }
 }
