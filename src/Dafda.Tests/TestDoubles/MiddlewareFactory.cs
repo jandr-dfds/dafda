@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Threading.Tasks;
 using Dafda.Middleware;
 
@@ -7,12 +8,16 @@ namespace Dafda.Tests.TestDoubles;
 
 internal static class MiddlewareFactory
 {
-    public static MiddlewareSpy<TInContext, TOutContext> DecorateWithSpy<TInContext, TOutContext>(IMiddleware<TInContext, TOutContext> middleware)
+    public static MiddlewareSpy<TInContext, TOutContext> DecorateWithSpy<TInContext, TOutContext>(IMiddleware<TInContext, TOutContext> middleware) 
+        where TInContext : IMiddlewareContext
+        where TOutContext : IMiddlewareContext
     {
         return new MiddlewareSpy<TInContext, TOutContext>(middleware);
     }
 
     public class MiddlewareSpy<TInContext, TOutContext> : IMiddleware<TInContext, TOutContext>
+        where TInContext : IMiddlewareContext
+        where TOutContext : IMiddlewareContext
     {
         private readonly IMiddleware<TInContext, TOutContext> _inner;
 
@@ -39,32 +44,46 @@ internal static class MiddlewareFactory
     }
 
     public static IMiddleware<TInContext, TOutContext> CreateDummy<TInContext, TOutContext>()
+        where TInContext : IMiddlewareContext
+        where TOutContext : IMiddlewareContext
     {
         return new MiddlewareDummy<TInContext, TOutContext>();
     }
 
     private class MiddlewareDummy<TInContext, TOutContext> : IMiddleware<TInContext, TOutContext>
+        where TInContext : IMiddlewareContext
+        where TOutContext : IMiddlewareContext
     {
         public Task Invoke(TInContext context, Func<TOutContext, Task> next) => Task.CompletedTask;
     }
 
-    public static IMiddleware<TInContext, TOutContext> CreateStub<TInContext, TOutContext>(Func<TInContext, TOutContext> next = null)
+    public static IMiddleware<ValueContext<TIn>, ValueContext<TOut>> CreateStub<TIn, TOut>(Func<TIn, TOut> next = null)
     {
-        return new MiddlewareStub<TInContext, TOutContext>(next);
+        return new MiddlewareStub<TIn, TOut>(next);
     }
-
-    private class MiddlewareStub<TInContext, TOutContext> : IMiddleware<TInContext, TOutContext>
+    
+    public class ValueContext<T> : IMiddlewareContext
     {
-        private readonly Func<TInContext, TOutContext> _next;
-
-        public MiddlewareStub(Func<TInContext, TOutContext> next = null)
+        public ValueContext(T value)
         {
-            _next = next;
+            Value = value;
         }
 
-        public Task Invoke(TInContext context, Func<TOutContext, Task> next)
+        public T Value { get; }
+    }
+
+    private class MiddlewareStub<TIn, TOut> : IMiddleware<ValueContext<TIn>, ValueContext<TOut>>
+    {
+        private readonly Func<TIn, TOut> _transform;
+
+        public MiddlewareStub(Func<TIn, TOut> transform = null)
         {
-            return next(_next(context));
+            _transform = transform;
+        }
+
+        public Task Invoke(ValueContext<TIn> context, Func<ValueContext<TOut>, Task> next)
+        {
+            return next(new ValueContext<TOut>(_transform(context.Value)));
         }
     }
 
@@ -90,11 +109,14 @@ internal static class MiddlewareFactory
         private readonly IList<object> _recordedContexts = new List<object>();
 
         public IMiddleware<TContext, TContext> CreateMiddleware<TContext>()
+            where TContext : IMiddlewareContext
         {
             return CreateMiddleware<TContext, TContext>(context => context);
         }
 
         public IMiddleware<TInContext, TOutContext> CreateMiddleware<TInContext, TOutContext>(Func<TInContext, TOutContext> transformContext)
+            where TInContext : IMiddlewareContext
+            where TOutContext : IMiddlewareContext
         {
             return new Spy<TInContext, TOutContext>(_recordedContexts, transformContext);
         }
@@ -102,6 +124,8 @@ internal static class MiddlewareFactory
         public IEnumerable<object> RecordedContexts => _recordedContexts;
 
         private class Spy<TInContext, TOutContext> : IMiddleware<TInContext, TOutContext>
+            where TInContext : IMiddlewareContext
+            where TOutContext : IMiddlewareContext
         {
             private readonly IList<object> _recordedContexts;
             private readonly Func<TInContext, TOutContext> _transformContext;

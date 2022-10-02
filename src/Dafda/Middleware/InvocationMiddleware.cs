@@ -15,7 +15,7 @@ internal class InvocationMiddleware : IMiddleware<InvocationContext, InvocationM
         );
     }
 
-    public interface IEndOfPipelineContext
+    public interface IEndOfPipelineContext : IMiddlewareContext
     {
     }
 }

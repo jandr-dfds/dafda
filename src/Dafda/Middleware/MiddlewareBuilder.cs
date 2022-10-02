@@ -5,7 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Dafda.Middleware;
 
-internal class MiddlewareBuilder<T>
+internal class MiddlewareBuilder<T> 
+    where T : IMiddlewareContext
 {
     private readonly IServiceCollection _services;
     private readonly List<Func<IServiceProvider, IMiddleware>> _registrations;
@@ -21,7 +22,8 @@ internal class MiddlewareBuilder<T>
         _services = services;
     }
 
-    public MiddlewareBuilder<TOutContext> Register<TOutContext>(Func<IServiceProvider, IMiddleware<T, TOutContext>> factory)
+    public MiddlewareBuilder<TOutContext> Register<TOutContext>(Func<IServiceProvider, IMiddleware<T, TOutContext>> factory) 
+        where TOutContext : IMiddlewareContext
     {
         _services.AddTransient((Func<IServiceProvider, IMiddleware>)factory);
         _registrations.Add(factory);

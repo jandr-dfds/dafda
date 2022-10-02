@@ -47,11 +47,11 @@ public class TestPipeline
         }, spy.RecordedContexts);
     }
 
-    private class SomeContext
+    private class SomeContext : IMiddlewareContext
     {
     }
 
-    private class SomeOtherContext
+    private class SomeOtherContext : IMiddlewareContext
     {
     }
 }

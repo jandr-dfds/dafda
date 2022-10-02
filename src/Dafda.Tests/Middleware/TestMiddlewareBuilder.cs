@@ -57,11 +57,11 @@ public class TestMiddlewareBuilder
         }, middlewares);
     }
 
-    private interface IContextA
+    private interface IContextA : IMiddlewareContext
     {
     }
 
-    private interface IContextB
+    private interface IContextB : IMiddlewareContext
     {
     }
 }

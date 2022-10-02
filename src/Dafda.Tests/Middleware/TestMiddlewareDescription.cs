@@ -16,8 +16,8 @@ public class TestMiddlewareDescription
         var description = MiddlewareDescription.Describe(middleware);
 
         Assert.Same(description.Instance, middleware);
-        Assert.Same(description.InContextType, typeof(int));
-        Assert.Same(description.OutContextType, typeof(string));
+        Assert.Same(description.InContextType, typeof(MiddlewareFactory.ValueContext<int>));
+        Assert.Same(description.OutContextType, typeof(MiddlewareFactory.ValueContext<string>));
         Assert.NotNull(description.InvokeMethod);
     }
 
@@ -28,13 +28,13 @@ public class TestMiddlewareDescription
         var middleware = MiddlewareFactory.CreateStub<int, string>(ctx =>  ctx.ToString());
         var description = MiddlewareDescription.Describe(middleware);
 
-        await ((Task)description.InvokeMethod.Invoke(middleware, new object[] { 1, Spy }))!;
+        await ((Task)description.InvokeMethod.Invoke(middleware, new object[] { new MiddlewareFactory.ValueContext<int>(1), Spy }))!;
 
         Assert.Equal("1", recordedValue);
 
-        Task Spy(string s)
+        Task Spy(MiddlewareFactory.ValueContext<string> context)
         {
-            recordedValue = s;
+            recordedValue = context.Value;
             return Task.CompletedTask;
         }
     }
