@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Dafda.Consuming;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -11,21 +9,8 @@ namespace Dafda.Configuration
     /// <summary></summary>
     public static class ConsumerServiceCollectionExtensions
     {
-        private class ConsumerGroupIdRepository
-        {
-            private readonly ISet<string> _ids;
-
-            public ConsumerGroupIdRepository()
-            {
-                _ids = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
-            }
-
-            public void Add(string newId) => _ids.Add(newId);
-            public bool Contains(string id) => _ids.Contains(id);
-        }
-
         /// <summary>
-        /// Add a Kafka consumer. The consumer will run in an <see cref="IHostedService"/>.
+        /// Add a Kafka consumer. The consumer will run in a <see cref="IHostedService"/>.
         /// It is possible to configure multi consumers.
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection"/> used in <c>Startup</c>.</param>
@@ -36,29 +21,9 @@ namespace Dafda.Configuration
             options?.Invoke(consumerOptions);
             var configuration = consumerOptions.Build();
 
-            var consumerGroupIdRepository = services
-                .Where(x => x.ServiceType == typeof(ConsumerGroupIdRepository))
-                .Where(x => x.Lifetime == ServiceLifetime.Singleton)
-                .Where(x => x.ImplementationInstance != null)
-                .Where(x => x.ImplementationInstance.GetType() == typeof(ConsumerGroupIdRepository))
-                .Select(x => x.ImplementationInstance)
-                .Cast<ConsumerGroupIdRepository>()
-                .FirstOrDefault();
+            UniqueConsumerGroupId.Ensure(services, configuration.GroupId);
 
-            if (consumerGroupIdRepository == null)
-            {
-                consumerGroupIdRepository = new ConsumerGroupIdRepository();
-                services.AddSingleton(consumerGroupIdRepository);
-            }
-
-            if (consumerGroupIdRepository.Contains(configuration.GroupId))
-            {
-                throw new InvalidConfigurationException($"Multiple consumers CANNOT be configured with same consumer group id \"{configuration.GroupId}\".");
-            }
-
-            consumerGroupIdRepository.Add(configuration.GroupId);
-
-            ConsumerHostedService HostedServiceFactory(IServiceProvider provider)
+            ConsumerHostedService CreateConsumerHostedService(IServiceProvider provider)
             {
                 var consumer = new Consumer(
                     provider.GetRequiredService<ILogger<Consumer>>(),
@@ -77,8 +42,8 @@ namespace Dafda.Configuration
             );
             }
 
-            services.AddTransient<IHostedService, ConsumerHostedService>(HostedServiceFactory);
-            services.AddTransient<ConsumerHostedService>(HostedServiceFactory); // NOTE: [jandr] is this needed?
+            services.AddTransient<IHostedService, ConsumerHostedService>(CreateConsumerHostedService);
+            services.AddTransient<ConsumerHostedService>(CreateConsumerHostedService); // NOTE: [jandr] is this needed?
         }
     }
 }
