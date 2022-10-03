@@ -42,8 +42,8 @@ namespace Dafda.Tests.Builders
             var serviceCollection = new ServiceCollection();
             var middlewareBuilder = new MiddlewareBuilder<OutgoingMessageContext>(serviceCollection);
             middlewareBuilder
-                .Register(_ => new PayloadDescriptionMiddleware(_outgoingMessageRegistry, _messageIdGenerator))
-                .Register(_ => new SerializationMiddleware(new TopicPayloadSerializerRegistry(() => _payloadSerializer)));
+                .Register(new PayloadDescriptionMiddleware(_outgoingMessageRegistry, _messageIdGenerator))
+                .Register(new SerializationMiddleware(new TopicPayloadSerializerRegistry(() => _payloadSerializer)));
 
             var middlewares = middlewareBuilder
                 .Build(serviceCollection.BuildServiceProvider())

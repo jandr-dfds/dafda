@@ -19,11 +19,12 @@ namespace Dafda.Tests.Consuming
             registry.Register<FooMessage, MessageHandlerSpy<FooMessage>>("", "");
 
             var services = new ServiceCollection();
+            services.AddTransient(_ => handlerStub);
             var middlewareBuilder = new MiddlewareBuilder<IncomingRawMessageContext>(services);
             middlewareBuilder
-                .Register(_ => new DeserializationMiddleware(DeserializerStub.Returns(new FooMessage())))
-                .Register(_ => new MessageHandlerMiddleware(registry, _ => handlerStub))
-                .Register(_ => new InvocationMiddleware())
+                .Register(new DeserializationMiddleware(DeserializerStub.Returns(new FooMessage())))
+                .Register(new MessageHandlerMiddleware(registry))
+                .Register(new InvocationMiddleware())
                 ;
 
             var serviceProvider = services.BuildServiceProvider();
@@ -46,9 +47,9 @@ namespace Dafda.Tests.Consuming
             var services = new ServiceCollection();
             var middlewareBuilder = new MiddlewareBuilder<IncomingRawMessageContext>(services);
             middlewareBuilder
-                .Register(_ => new DeserializationMiddleware(DeserializerStub.Returns(new FooMessage())))
-                .Register(_ => new MessageHandlerMiddleware(registry, _ => null))
-                .Register(_ => new InvocationMiddleware())
+                .Register(new DeserializationMiddleware(DeserializerStub.Returns(new FooMessage())))
+                .Register(new MessageHandlerMiddleware(registry))
+                .Register(new InvocationMiddleware())
                 ;
 
             var serviceProvider = services.BuildServiceProvider();

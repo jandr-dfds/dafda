@@ -1,21 +1,16 @@
 using System;
 using System.Threading.Tasks;
 using Dafda.Outbox;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Dafda.Middleware;
 
 internal class OutboxStorageMiddleware : IMiddleware<OutboxStorageContext, OutboxStorageMiddleware.IEndOfPipelineContext>
 {
-    private readonly IOutboxEntryRepository _repository;
-
-    public OutboxStorageMiddleware(IOutboxEntryRepository repository)
-    {
-        _repository = repository;
-    }
-
     public async Task Invoke(OutboxStorageContext context, Func<IEndOfPipelineContext, Task> next)
     {
-        await _repository.Add(context.OutboxEntries);
+        var repository = context.ServiceProvider.GetRequiredService<IOutboxEntryRepository>();
+        await repository.Add(context.OutboxEntries);
     }
 
     public interface IEndOfPipelineContext : IMiddlewareContext

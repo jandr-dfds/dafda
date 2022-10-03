@@ -15,10 +15,10 @@ public class TestMiddlewareBuilder
         var ba = MiddlewareFactory.CreateDummy<IContextB, IContextA>();
 
         var middlewares = new MiddlewareBuilder<IContextA>(services)
-            .Register(_ => aa)
-            .Register(_ => ab)
-            .Register(_ => ba)
-            .Register(_ => aa)
+            .Register(aa)
+            .Register(ab)
+            .Register(ba)
+            .Register(aa)
             .Build(services.BuildServiceProvider());
 
         Assert.Equal(new IMiddleware[]
@@ -39,11 +39,11 @@ public class TestMiddlewareBuilder
         var middleware3 = MiddlewareFactory.CreateDummy<IContextA, IContextA>();
 
         var middlewares = new MiddlewareBuilder<IContextA>(services)
-            .RegisterAll(new Func<IServiceProvider, IMiddleware<IContextA, IContextA>>[]
+            .RegisterAll(new IMiddleware<IContextA, IContextA>[]
             {
-                _ => middleware1,
-                _ => middleware2,
-                _ => middleware3
+                middleware1,
+                middleware2,
+                middleware3
             })
             .Build(services.BuildServiceProvider());
 

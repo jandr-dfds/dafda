@@ -269,9 +269,9 @@ namespace Dafda.Configuration
             var deserializer = _deserializer ?? new Deserializer(_messageHandlerRegistry);
             
             _middlewareBuilder
-                .Register(_ => new DeserializationMiddleware(deserializer))
-                .Register(p => new MessageHandlerMiddleware(_messageHandlerRegistry, p.GetRequiredService))
-                .Register(_ => new InvocationMiddleware());
+                .Register(new DeserializationMiddleware(deserializer))
+                .Register(new MessageHandlerMiddleware(_messageHandlerRegistry))
+                .Register(new InvocationMiddleware());
 
             var configuration = ConfigurationBuilder
                 .ForConsumer

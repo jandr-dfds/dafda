@@ -30,17 +30,18 @@ namespace Dafda.Tests.Builders
         public OutboxQueue Build()
         {
             var services = new ServiceCollection();
+            services.AddTransient(_ => _outboxEntryRepository);
             var middlewareBuilder = new MiddlewareBuilder<OutboxMessageContext>(services);
 
             middlewareBuilder
-                .Register(_ => new OutboxPayloadDescriptionMiddleware(_outgoingMessageRegistry, MessageIdGenerator.Default))
-                .Register(_ => new OutboxSerializationMiddleware(new TopicPayloadSerializerRegistry(() => _payloadSerializer)))
-                .Register(_ => new OutboxStorageMiddleware(_outboxEntryRepository));
+                .Register(new OutboxPayloadDescriptionMiddleware(_outgoingMessageRegistry, MessageIdGenerator.Default))
+                .Register(new OutboxSerializationMiddleware(new TopicPayloadSerializerRegistry(() => _payloadSerializer)))
+                .Register(new OutboxStorageMiddleware());
 
             var serviceProvider = services.BuildServiceProvider();
             var pipeline = new Pipeline(middlewareBuilder.Build(serviceProvider));
 
-            return new OutboxQueue(outboxNotifier: new NullOutboxNotifier(), pipeline);
+            return new OutboxQueue(outboxNotifier: new NullOutboxNotifier(), pipeline: pipeline, serviceProvider);
         }
 
         public static implicit operator OutboxQueue(OutboxQueueBuilder builder)

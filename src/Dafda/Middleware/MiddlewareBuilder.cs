@@ -31,7 +31,15 @@ internal class MiddlewareBuilder<T>
         return new MiddlewareBuilder<TOutContext>(_services, _registrations);
     }
 
-    public MiddlewareBuilder<T> RegisterAll(IEnumerable<Func<IServiceProvider, IMiddleware<T, T>>> factories)
+    public MiddlewareBuilder<TOutContext> Register<TOutContext>(IMiddleware<T, TOutContext> factory) 
+        where TOutContext : IMiddlewareContext
+    {
+        _registrations.Add(_ => factory);
+
+        return new MiddlewareBuilder<TOutContext>(_services, _registrations);
+    }
+
+    public MiddlewareBuilder<T> RegisterAll(IEnumerable<IMiddleware<T, T>> factories)
     {
         foreach (var factory in factories)
         {

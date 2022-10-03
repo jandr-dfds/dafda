@@ -135,9 +135,9 @@ namespace Dafda.Configuration
         internal OutboxConfiguration Build()
         {
             _middlewareBuilder
-                .Register(_ => new OutboxPayloadDescriptionMiddleware(_outgoingMessageRegistry, _messageIdGenerator))
-                .Register(_ => new OutboxSerializationMiddleware(_topicPayloadSerializerRegistry))
-                .Register(provider => new OutboxStorageMiddleware(provider.GetRequiredService<IOutboxEntryRepository>()))
+                .Register(new OutboxPayloadDescriptionMiddleware(_outgoingMessageRegistry, _messageIdGenerator))
+                .Register(new OutboxSerializationMiddleware(_topicPayloadSerializerRegistry))
+                .Register(new OutboxStorageMiddleware())
                 ;
 
             return new OutboxConfiguration(_notifier, _middlewareBuilder);

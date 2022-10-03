@@ -30,7 +30,7 @@ namespace Dafda.Configuration
 
                 var pipeline = new Pipeline(middlewares);
 
-                return new OutboxQueue(configuration.Notifier, pipeline);
+                return new OutboxQueue(configuration.Notifier, pipeline, provider);
             });
         }
 
@@ -57,7 +57,7 @@ namespace Dafda.Configuration
                 var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
                 var middleware = configuration.MiddlewareBuilder.Build(provider);
                 var pipeline = new Pipeline(middleware);
-                var producer = new OutboxProducer(pipeline);
+                var producer = new OutboxProducer(pipeline, provider);
                 var outboxDispatcher = new OutboxDispatcher(loggerFactory, outboxUnitOfWorkFactory, producer);
 
                 return new OutboxDispatcherHostedService(outboxListener, outboxDispatcher);

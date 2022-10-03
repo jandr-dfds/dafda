@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,11 +13,13 @@ namespace Dafda.Outbox
     {
         private readonly IOutboxNotifier _outboxNotifier;
         private readonly Pipeline _pipeline;
+        private readonly IServiceProvider _serviceProvider;
 
-        internal OutboxQueue(IOutboxNotifier outboxNotifier, Pipeline pipeline)
+        internal OutboxQueue(IOutboxNotifier outboxNotifier, Pipeline pipeline, IServiceProvider serviceProvider)
         {
             _outboxNotifier = outboxNotifier;
             _pipeline = pipeline;
+            _serviceProvider = serviceProvider;
         }
 
         /// <summary>
@@ -61,7 +64,7 @@ namespace Dafda.Outbox
                 .Select(m => new OutgoingMessage(m, headers))
                 .ToArray();
 
-            await _pipeline.Invoke(new OutboxMessageContext(outgoingMessages, new RootMiddlewareContext(null)));
+            await _pipeline.Invoke(new OutboxMessageContext(outgoingMessages, new RootMiddlewareContext(_serviceProvider)));
 
             return _outboxNotifier;
         }

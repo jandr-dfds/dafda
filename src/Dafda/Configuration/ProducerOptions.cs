@@ -194,8 +194,8 @@ namespace Dafda.Configuration
         internal ProducerConfiguration Build()
         {
             _middlewareBuilder
-                .Register(_ => new PayloadDescriptionMiddleware(_outgoingMessageRegistry, _messageIdGenerator))
-                .Register(_ => new SerializationMiddleware(_topicPayloadSerializerRegistry))
+                .Register(new PayloadDescriptionMiddleware(_outgoingMessageRegistry, _messageIdGenerator))
+                .Register(new SerializationMiddleware(_topicPayloadSerializerRegistry))
                 ;
 
             var configurations = ConfigurationBuilder

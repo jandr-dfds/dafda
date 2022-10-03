@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Dafda.Middleware;
 using Dafda.Outbox;
@@ -10,10 +11,12 @@ namespace Dafda.Producing
     internal sealed class OutboxProducer
     {
         private readonly Pipeline _pipeline;
+        private readonly IServiceProvider _serviceProvider;
 
-        internal OutboxProducer(Pipeline pipeline)
+        internal OutboxProducer(Pipeline pipeline, IServiceProvider serviceProvider)
         {
             _pipeline = pipeline;
+            _serviceProvider = serviceProvider;
         }
 
         /// <summary>
@@ -22,7 +25,7 @@ namespace Dafda.Producing
         /// <param name="entry">The outbox message</param>
         public async Task Produce(OutboxEntry entry)
         {
-            await _pipeline.Invoke(new OutgoingRawMessageContext(new OutgoingRawMessage(entry.Topic, entry.Key, entry.Payload), new RootMiddlewareContext(null)));
+            await _pipeline.Invoke(new OutgoingRawMessageContext(new OutgoingRawMessage(entry.Topic, entry.Key, entry.Payload), new RootMiddlewareContext(_serviceProvider)));
         }
     }
 }

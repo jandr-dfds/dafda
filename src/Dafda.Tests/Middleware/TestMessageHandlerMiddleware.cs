@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Dafda.Consuming;
 using Dafda.Middleware;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Dafda.Tests.Middleware;
 
@@ -17,12 +18,14 @@ public class TestMessageHandlerMiddleware
 
         var dummyMessageHandler = new DummyMessageHandler();
 
-        object Resolver(Type type) => dummyMessageHandler;
-
-        var sut = new MessageHandlerMiddleware(messageHandlerRegistry, Resolver);
+        var sut = new MessageHandlerMiddleware(messageHandlerRegistry);
         var spy = MiddlewareFactory.DecorateWithSpy(sut);
 
-        await spy.Invoke(new IncomingMessageContext(dummy));
+        var serviceProvider = new ServiceCollection()
+            .AddTransient(_ => dummyMessageHandler)
+            .BuildServiceProvider();
+        
+        await spy.Invoke(new IncomingMessageContext(dummy, new RootMiddlewareContext(serviceProvider)));
 
         Assert.Equal(spy.OutContext.Message, dummy);
         Assert.Equal(typeof(DummyMessageHandler), spy.OutContext.MessageHandler.HandlerType);
