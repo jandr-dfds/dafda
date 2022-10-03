@@ -19,6 +19,21 @@ namespace Dafda.Middleware
         /// <see cref="IServiceProvider"/> for the current executing middleware context. 
         /// </summary>
         IServiceProvider ServiceProvider { get; }
+
+        /// <summary>
+        /// Store the <paramref name="instance"/> in the middleware current context.
+        /// </summary>
+        /// <param name="instance">The instance to store.</param>
+        /// <typeparam name="T">The instance type</typeparam>
+        public void Set<T>(T instance);
+
+        /// <summary>
+        /// Retrieve the instance of type <typeparamref name="T"/> previously stored
+        /// in the middleware current context.
+        /// </summary>
+        /// <typeparam name="T">The instance type</typeparam>
+        /// <returns>The instance; or the default value of type <typeparamref name="T"/></returns>
+        public T Get<T>();
     }
     
     /// <summary>

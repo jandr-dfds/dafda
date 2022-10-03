@@ -19,7 +19,7 @@ namespace Dafda.Tests.Builders
         {
             var serviceCollection = new ServiceCollection();
             var middlewareBuilder = new MiddlewareBuilder<OutgoingRawMessageContext>(serviceCollection);
-            middlewareBuilder.Register(new DispatchMiddleware(_kafkaProducer));
+            middlewareBuilder.Register(new DispatchMiddleware());
 
             var provider = serviceCollection.BuildServiceProvider();
             var middlewares = middlewareBuilder
@@ -28,7 +28,7 @@ namespace Dafda.Tests.Builders
 
             var pipeline = new Pipeline(middlewares);
 
-            return new OutboxProducer(pipeline, provider);
+            return new OutboxProducer(pipeline, provider, _kafkaProducer);
         }
 
         public static implicit operator OutboxProducer(OutboxProducerBuilder builder)

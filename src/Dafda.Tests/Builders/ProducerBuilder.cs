@@ -43,16 +43,17 @@ namespace Dafda.Tests.Builders
             var middlewareBuilder = new MiddlewareBuilder<OutgoingMessageContext>(serviceCollection);
             middlewareBuilder
                 .Register(new PayloadDescriptionMiddleware(_outgoingMessageRegistry, _messageIdGenerator))
-                .Register(new SerializationMiddleware(new TopicPayloadSerializerRegistry(() => _payloadSerializer)));
+                .Register(new SerializationMiddleware(new TopicPayloadSerializerRegistry(() => _payloadSerializer)))
+                .Register(new DispatchMiddleware());
 
+            var provider = serviceCollection.BuildServiceProvider();
             var middlewares = middlewareBuilder
-                .Build(serviceCollection.BuildServiceProvider())
-                .Append(new DispatchMiddleware(_kafkaProducer))
+                .Build(provider)
                 .ToArray();
 
             var pipeline = new Pipeline(middlewares);
 
-            return new Producer(pipeline);
+            return new Producer(pipeline, provider, _kafkaProducer);
         }
 
         public static implicit operator Producer(ProducerBuilder builder)

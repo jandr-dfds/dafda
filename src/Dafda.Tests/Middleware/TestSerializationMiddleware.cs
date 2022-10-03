@@ -10,10 +10,10 @@ public class TestSerializationMiddleware
     public async Task Can_create_outgoing_raw_message()
     {
         var spy = new KafkaProducerSpy();
-        var sut = new DispatchMiddleware(spy);
+        var sut = new DispatchMiddleware();
 
         var outgoingRawMessage = new OutgoingRawMessage("dummy-topic", "dummy-key", "dummy-data");
-        await sut.Invoke(new OutgoingRawMessageContext(outgoingRawMessage, new DummyMiddlewareContext()), _ => Task.CompletedTask);
+        await sut.Invoke(new OutgoingRawMessageContext(outgoingRawMessage, new RootProducerMiddlewareContext(null, spy)), _ => Task.CompletedTask);
         
         Assert.Equal("dummy-topic",  spy.Topic);
         Assert.Equal("dummy-key",  spy.Key);

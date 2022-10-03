@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
 using Dafda.Consuming;
@@ -12,10 +13,14 @@ namespace Dafda.Producing
     public sealed class Producer
     {
         private readonly Pipeline _pipeline;
+        private readonly IServiceProvider _provider;
+        private readonly KafkaProducer _kafkaProducer;
 
-        internal Producer(Pipeline pipeline)
+        internal Producer(Pipeline pipeline, IServiceProvider provider, KafkaProducer kafkaProducer)
         {
             _pipeline = pipeline;
+            _provider = provider;
+            _kafkaProducer = kafkaProducer;
         }
 
         internal string Name { get; init; } = "__Default Producer__";
@@ -36,7 +41,8 @@ namespace Dafda.Producing
         /// <param name="headers">The message headers</param>
         public async Task Produce(object message, Metadata headers)
         {
-            await _pipeline.Invoke(new OutgoingMessageContext(new OutgoingMessage(message, headers), new RootMiddlewareContext(null)));
+            var root = new RootProducerMiddlewareContext(_provider, _kafkaProducer);
+            await _pipeline.Invoke(new OutgoingMessageContext(new OutgoingMessage(message, headers), root));
         }
 
         /// <summary>

@@ -196,7 +196,7 @@ namespace Dafda.Configuration
             _middlewareBuilder
                 .Register(new PayloadDescriptionMiddleware(_outgoingMessageRegistry, _messageIdGenerator))
                 .Register(new SerializationMiddleware(_topicPayloadSerializerRegistry))
-                ;
+                .Register(new DispatchMiddleware());
 
             var configurations = ConfigurationBuilder
                 .ForProducer

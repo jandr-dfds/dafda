@@ -154,9 +154,9 @@ namespace Dafda.Configuration
                 return new KafkaProducer(loggerFactory, configurations);
             };
 
-            _middlewareBuilder.Register(provider => new DispatchMiddleware(_kafkaProducerFactory(provider)));
+            _middlewareBuilder.Register(new DispatchMiddleware());
 
-            return new OutboxProducerConfiguration(_middlewareBuilder);
+            return new OutboxProducerConfiguration(_middlewareBuilder, _kafkaProducerFactory);
         }
 
         private class DefaultConfigurationSource : ConfigurationSource

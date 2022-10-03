@@ -28,7 +28,7 @@ namespace Dafda.Producing
             _registrations.Add(producerName, new ProducerFactory(producerName, configuration));
         }
 
-        public Producer Get(string producerName, IServiceProvider serviceProvider) 
+        public Producer Get(string producerName, IServiceProvider serviceProvider)
         {
             if (_registrations.TryGetValue(producerName, out var factory))
             {
@@ -73,12 +73,11 @@ namespace Dafda.Producing
 
                 var middlewares = _middlewareBuilder
                     .Build(provider)
-                    .Append(new DispatchMiddleware(_kafkaProducer))
                     .ToArray();
 
                 var pipeline = new Pipeline(middlewares);
 
-                var producer = new Producer(pipeline)
+                var producer = new Producer(pipeline, provider, _kafkaProducer)
                 {
                     Name = _producerName
                 };
