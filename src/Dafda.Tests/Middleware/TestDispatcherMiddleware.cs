@@ -17,7 +17,7 @@ public class TestDispatcherMiddleware
             .WithPartitionKey("dummy-key")
             .Build();
 
-        await sut.Invoke(new PayloadDescriptorContext(payloadDescriptor), context =>
+        await sut.Invoke(new PayloadDescriptorContext(payloadDescriptor, new DummyMiddlewareContext()), context =>
         {
             message = context.Message;
             return Task.CompletedTask;

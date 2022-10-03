@@ -17,6 +17,6 @@ internal class PayloadDescriptionMiddleware : IMiddleware<OutgoingMessageContext
     {
         var payloadDescriptor = _payloadDescriptorFactory.Create(context.Message);
 
-        return next(new PayloadDescriptorContext(payloadDescriptor));
+        return next(new PayloadDescriptorContext(payloadDescriptor, context));
     }
 }

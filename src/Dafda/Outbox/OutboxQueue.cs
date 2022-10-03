@@ -61,7 +61,7 @@ namespace Dafda.Outbox
                 .Select(m => new OutgoingMessage(m, headers))
                 .ToArray();
 
-            await _pipeline.Invoke(new OutboxMessageContext(outgoingMessages));
+            await _pipeline.Invoke(new OutboxMessageContext(outgoingMessages, new RootMiddlewareContext(null)));
 
             return _outboxNotifier;
         }

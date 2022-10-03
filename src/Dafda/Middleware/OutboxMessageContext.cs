@@ -2,9 +2,10 @@ using Dafda.Producing;
 
 namespace Dafda.Middleware
 {
-    internal class OutboxMessageContext : IMiddlewareContext
+    internal class OutboxMessageContext : MiddlewareContext
     {
-        public OutboxMessageContext(OutgoingMessage[] messages)
+        public OutboxMessageContext(OutgoingMessage[] messages, IMiddlewareContext parent)
+            : base(parent)
         {
             Messages = messages;
         }

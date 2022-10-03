@@ -20,6 +20,6 @@ internal class OutboxPayloadDescriptionMiddleware : IMiddleware<OutboxMessageCon
             .Select(message => _payloadDescriptorFactory.Create(message))
             .ToArray();
 
-        return next(new OutboxPayloadDescriptionContext(payloadDescriptors));
+        return next(new OutboxPayloadDescriptionContext(payloadDescriptors, context));
     }
 }

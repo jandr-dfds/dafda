@@ -2,9 +2,10 @@ using Dafda.Serializing;
 
 namespace Dafda.Middleware;
 
-internal class PayloadDescriptorContext : IMiddlewareContext
+internal class PayloadDescriptorContext : MiddlewareContext
 {
-    public PayloadDescriptorContext(PayloadDescriptor payloadDescriptor)
+    public PayloadDescriptorContext(PayloadDescriptor payloadDescriptor, IMiddlewareContext parent)
+        : base(parent)
     {
         PayloadDescriptor = payloadDescriptor;
     }

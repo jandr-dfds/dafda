@@ -22,7 +22,7 @@ namespace Dafda.Producing
         /// <param name="entry">The outbox message</param>
         public async Task Produce(OutboxEntry entry)
         {
-            await _pipeline.Invoke(new OutgoingRawMessageContext(new OutgoingRawMessage(entry.Topic, entry.Key, entry.Payload)));
+            await _pipeline.Invoke(new OutgoingRawMessageContext(new OutgoingRawMessage(entry.Topic, entry.Key, entry.Payload), new RootMiddlewareContext(null)));
         }
     }
 }

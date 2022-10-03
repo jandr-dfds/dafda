@@ -16,6 +16,6 @@ internal class DeserializationMiddleware : IMiddleware<IncomingRawMessageContext
     public Task Invoke(IncomingRawMessageContext context, Func<IncomingMessageContext, Task> next)
     {
         var incomingMessage = _deserializer.Deserialize(context.Message);
-        return next(new IncomingMessageContext(incomingMessage));
+        return next(new IncomingMessageContext(incomingMessage, context));
     }
 }

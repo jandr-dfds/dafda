@@ -6,10 +6,11 @@ namespace Dafda.Middleware;
 /// Context with everything needed to invoke the <see cref="IMessageHandler{T}"/> implementation
 /// for the incoming message.
 /// </summary>
-public class InvocationContext : IMiddlewareContext
+public class InvocationContext : MiddlewareContext
 {
     /// <summary/>
-    public InvocationContext(IncomingMessage message, MessageHandlerDelegate messageHandler, object messageHandlerInstance)
+    public InvocationContext(IncomingMessage message, MessageHandlerDelegate messageHandler, object messageHandlerInstance, IMiddlewareContext parent)
+        : base(parent)
     {
         Message = message;
         MessageHandler = messageHandler;

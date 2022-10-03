@@ -13,7 +13,7 @@ public class TestSerializationMiddleware
         var sut = new DispatchMiddleware(spy);
 
         var outgoingRawMessage = new OutgoingRawMessage("dummy-topic", "dummy-key", "dummy-data");
-        await sut.Invoke(new OutgoingRawMessageContext(outgoingRawMessage), _ => Task.CompletedTask);
+        await sut.Invoke(new OutgoingRawMessageContext(outgoingRawMessage, new DummyMiddlewareContext()), _ => Task.CompletedTask);
         
         Assert.Equal("dummy-topic",  spy.Topic);
         Assert.Equal("dummy-key",  spy.Key);

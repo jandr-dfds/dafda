@@ -1,5 +1,7 @@
+using System;
 using System.Threading.Tasks;
 using Dafda.Middleware;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Dafda.Tests.Middleware;
 
@@ -46,6 +48,24 @@ public class TestPipeline
     }
 
     [Fact]
+    public async Task same_service_provider_throughout_pipeline()
+    {
+        var spy = new ForwardContextMiddleware<ContextStub>();
+        var pipeline = new Pipeline(
+            new ForwardContextMiddleware<RootMiddlewareContext, ContextStub>(c => new ContextStub(c)),
+            new ForwardContextMiddleware<ContextStub, ContextStub>(c => new ContextStub(c)),
+            new ForwardContextMiddleware<ContextStub, ContextStub>(c => new ContextStub(c)),
+            spy
+        );
+
+        var serviceProvider = new ServiceCollection().BuildServiceProvider();
+        var startingContext = new RootMiddlewareContext(serviceProvider);
+        await pipeline.Invoke(startingContext);
+
+        Assert.Equal(serviceProvider, spy.OutContext?.ServiceProvider);
+    }
+
+    [Fact]
     public async Task can_handle_no_middleware()
     {
         var pipeline = new Pipeline();
@@ -53,11 +73,55 @@ public class TestPipeline
         await pipeline.Invoke(new SomeContext());
     }
 
-    private class SomeContext : IMiddlewareContext
+    private class SomeContext : DummyMiddlewareContext
     {
     }
 
-    private class SomeOtherContext : IMiddlewareContext
+    private class SomeOtherContext : DummyMiddlewareContext
     {
+    }
+
+    private class ForwardContextMiddleware<TInContext, TOutContext> : IMiddleware<TInContext, TOutContext>
+        where TInContext : IMiddlewareContext
+        where TOutContext : IMiddlewareContext
+    {
+        private readonly Func<TInContext, TOutContext> _transform;
+
+        public ForwardContextMiddleware(Func<TInContext, TOutContext> transform)
+        {
+            _transform = transform;
+        }
+
+        public Task Invoke(TInContext context, Func<TOutContext, Task> next)
+        {
+            var outContext = _transform(context);
+            return next(outContext);
+        }
+    }
+
+    private class ForwardContextMiddleware<TInContext> : IMiddleware<TInContext, ContextSpy>
+        where TInContext : IMiddlewareContext
+    {
+        public Task Invoke(TInContext context, Func<ContextSpy, Task> next)
+        {
+            OutContext = new ContextSpy(context);
+            return next(OutContext);
+        }
+
+        public ContextSpy? OutContext { get; private set; }
+    }
+
+    private class ContextStub : MiddlewareContext
+    {
+        public ContextStub(IMiddlewareContext parent) : base(parent)
+        {
+        }
+    }
+
+    private class ContextSpy : MiddlewareContext
+    {
+        public ContextSpy(IMiddlewareContext parent) : base(parent)
+        {
+        }
     }
 }

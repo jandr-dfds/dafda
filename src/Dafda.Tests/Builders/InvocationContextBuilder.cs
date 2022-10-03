@@ -29,7 +29,7 @@ internal class InvocationContextBuilder
 
     public InvocationContext Build()
     {
-        return new InvocationContext(_incomingMessage, _messageHandler, _messageHandlerInstance);
+        return new InvocationContext(_incomingMessage, _messageHandler, _messageHandlerInstance, new DummyMiddlewareContext());
     }
 
     public static implicit operator InvocationContext(InvocationContextBuilder builder)

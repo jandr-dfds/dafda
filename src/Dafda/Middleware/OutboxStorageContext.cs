@@ -2,9 +2,10 @@ using Dafda.Outbox;
 
 namespace Dafda.Middleware;
 
-internal class OutboxStorageContext : IMiddlewareContext
+internal class OutboxStorageContext : MiddlewareContext
 {
-    public OutboxStorageContext(OutboxEntry[] outboxEntries)
+    public OutboxStorageContext(OutboxEntry[] outboxEntries, IMiddlewareContext parent)
+        : base(parent)
     {
         OutboxEntries = outboxEntries;
     }

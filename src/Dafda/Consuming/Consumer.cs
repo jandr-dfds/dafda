@@ -52,7 +52,7 @@ namespace Dafda.Consuming
                 var pipeline = new Pipeline(middlewares);
 
                 // execute pipeline
-                await pipeline.Invoke(new IncomingRawMessageContext(messageResult.Message));
+                await pipeline.Invoke(new IncomingRawMessageContext(messageResult.Message, new RootMiddlewareContext(scope.ServiceProvider)));
 
                 _logger.LogDebug("UnitOfWork:End");
             }

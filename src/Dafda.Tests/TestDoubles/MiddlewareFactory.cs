@@ -61,7 +61,7 @@ internal static class MiddlewareFactory
         return new MiddlewareStub<TIn, TOut>(next);
     }
     
-    public class ValueContext<T> : IMiddlewareContext
+    public class ValueContext<T> : DummyMiddlewareContext
     {
         public ValueContext(T value)
         {

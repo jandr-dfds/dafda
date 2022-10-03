@@ -5,10 +5,11 @@ namespace Dafda.Middleware;
 /// <summary>
 /// Context containing the incoming <see cref="RawMessage"/>.
 /// </summary>
-public class IncomingRawMessageContext : IMiddlewareContext
+public class IncomingRawMessageContext : MiddlewareContext
 {
     /// <summary/>
-    public IncomingRawMessageContext(RawMessage message)
+    public IncomingRawMessageContext(RawMessage message, IMiddlewareContext parent)
+        : base(parent)
     {
         Message = message;
     }

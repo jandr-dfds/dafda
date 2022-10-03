@@ -36,7 +36,7 @@ namespace Dafda.Producing
         /// <param name="headers">The message headers</param>
         public async Task Produce(object message, Metadata headers)
         {
-            await _pipeline.Invoke(new OutgoingMessageContext(new OutgoingMessage(message, headers)));
+            await _pipeline.Invoke(new OutgoingMessageContext(new OutgoingMessage(message, headers), new RootMiddlewareContext(null)));
         }
 
         /// <summary>

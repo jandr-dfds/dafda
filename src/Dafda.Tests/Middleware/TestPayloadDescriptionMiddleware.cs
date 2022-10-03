@@ -19,7 +19,7 @@ public class TestPayloadDescriptionMiddleware
         var sut = new PayloadDescriptionMiddleware(outgoingMessageRegistry, new MessageIdGeneratorStub(() => "dummy-id"));
         var dummyMessage = new object();
 
-        await sut.Invoke(new OutgoingMessageContext(new OutgoingMessage(dummyMessage, new Metadata())), context =>
+        await sut.Invoke(new OutgoingMessageContext(new OutgoingMessage(dummyMessage, new Metadata()), new DummyMiddlewareContext()), context =>
         {
             payloadDescriptor = context.PayloadDescriptor;
             return Task.CompletedTask;

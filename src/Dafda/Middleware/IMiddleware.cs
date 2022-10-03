@@ -15,6 +15,10 @@ namespace Dafda.Middleware
     /// </summary>
     public interface IMiddlewareContext
     {
+        /// <summary>
+        /// <see cref="IServiceProvider"/> for the current executing middleware context. 
+        /// </summary>
+        IServiceProvider ServiceProvider { get; }
     }
     
     /// <summary>

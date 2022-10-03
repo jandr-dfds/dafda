@@ -13,7 +13,7 @@ public class TestDeserializationMiddleware
         var sut = new DeserializationMiddleware(new DeserializerStub(dummy));
         var spy = MiddlewareFactory.DecorateWithSpy(sut);
 
-        await spy.Invoke(new IncomingRawMessageContext(A.RawMessage));
+        await spy.Invoke(new IncomingRawMessageContext(A.RawMessage, new DummyMiddlewareContext()));
 
         Assert.Equal(spy.OutContext.Message, dummy);
     }

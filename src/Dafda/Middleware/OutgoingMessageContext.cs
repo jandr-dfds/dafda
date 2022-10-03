@@ -5,10 +5,11 @@ namespace Dafda.Middleware;
 /// <summary>
 /// Context containing the <see cref="OutgoingMessage"/>.
 /// </summary>
-public class OutgoingMessageContext : IMiddlewareContext
+public class OutgoingMessageContext : MiddlewareContext
 {
     /// <summary/>
-    public OutgoingMessageContext(OutgoingMessage message)
+    public OutgoingMessageContext(OutgoingMessage message, IMiddlewareContext parent)
+        : base(parent)
     {
         Message = message;
     }

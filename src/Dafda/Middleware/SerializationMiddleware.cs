@@ -25,6 +25,6 @@ internal class SerializationMiddleware : IMiddleware<PayloadDescriptorContext, O
             await serializer.Serialize(payloadDescriptor)
         );
 
-        await next(new OutgoingRawMessageContext(message));
+        await next(new OutgoingRawMessageContext(message, context));
     }
 }

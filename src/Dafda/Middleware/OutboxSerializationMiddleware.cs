@@ -36,6 +36,6 @@ internal class OutboxSerializationMiddleware : IMiddleware<OutboxPayloadDescript
             outboxEntries.Add(outboxEntry);
         }
 
-        await next(new OutboxStorageContext(outboxEntries.ToArray()));
+        await next(new OutboxStorageContext(outboxEntries.ToArray(), context));
     }
 }
