@@ -26,7 +26,7 @@ namespace Dafda.Configuration
         internal OutboxProducerOptions(IServiceCollection services)
         {
             _services = services;
-            _middlewareBuilder = new MiddlewareBuilder<OutgoingRawMessageContext>(services);
+            _middlewareBuilder = new MiddlewareBuilder<OutgoingRawMessageContext>();
         }
 
         internal IOutboxListener OutboxListener { get; private set; }

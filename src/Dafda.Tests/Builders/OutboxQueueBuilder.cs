@@ -31,7 +31,7 @@ namespace Dafda.Tests.Builders
         {
             var services = new ServiceCollection();
             services.AddTransient(_ => _outboxEntryRepository);
-            var middlewareBuilder = new MiddlewareBuilder<OutboxMessageContext>(services);
+            var middlewareBuilder = new MiddlewareBuilder<OutboxMessageContext>();
 
             middlewareBuilder
                 .Register(new OutboxPayloadDescriptionMiddleware(_outgoingMessageRegistry, MessageIdGenerator.Default))
@@ -39,7 +39,7 @@ namespace Dafda.Tests.Builders
                 .Register(new OutboxStorageMiddleware());
 
             var serviceProvider = services.BuildServiceProvider();
-            var pipeline = new Pipeline(middlewareBuilder.Build(serviceProvider));
+            var pipeline = new Pipeline(middlewareBuilder.Build());
 
             return new OutboxQueue(outboxNotifier: new NullOutboxNotifier(), pipeline: pipeline, serviceProvider);
         }

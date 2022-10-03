@@ -30,7 +30,7 @@ namespace Dafda.Configuration
         {
             _services = services;
             _messageHandlerRegistry = new MessageHandlerRegistry();
-            _middlewareBuilder = new MiddlewareBuilder<IncomingRawMessageContext>(services);
+            _middlewareBuilder = new MiddlewareBuilder<IncomingRawMessageContext>();
             _deserializer = new Deserializer(_messageHandlerRegistry);
         }
 

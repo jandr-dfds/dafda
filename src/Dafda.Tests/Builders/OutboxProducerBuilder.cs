@@ -18,13 +18,12 @@ namespace Dafda.Tests.Builders
         public OutboxProducer Build()
         {
             var serviceCollection = new ServiceCollection();
-            var middlewareBuilder = new MiddlewareBuilder<OutgoingRawMessageContext>(serviceCollection);
+            var middlewareBuilder = new MiddlewareBuilder<OutgoingRawMessageContext>();
             middlewareBuilder.Register(new DispatchMiddleware());
 
             var provider = serviceCollection.BuildServiceProvider();
             var middlewares = middlewareBuilder
-                .Build(provider)
-                .ToArray();
+                .Build();
 
             var pipeline = new Pipeline(middlewares);
 

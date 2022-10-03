@@ -20,7 +20,7 @@ namespace Dafda.Tests.Builders
         {
             _consumerScope = new ConsumerScopeStub(new MessageResultBuilder().Build());
             _serviceScopeFactory = new FakeServiceScopeFactory(type => throw new InvalidOperationException($"{type.Name} type registered"));
-            _middlewareBuilder = new MiddlewareBuilder<IncomingRawMessageContext>(new ServiceCollection());
+            _middlewareBuilder = new MiddlewareBuilder<IncomingRawMessageContext>();
             _logger = NullLogger<Consumer>.Instance;
         }
 

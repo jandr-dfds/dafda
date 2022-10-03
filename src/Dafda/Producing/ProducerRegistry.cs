@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Dafda.Configuration;
 using Dafda.Middleware;
 
@@ -72,8 +71,7 @@ namespace Dafda.Producing
                 _kafkaProducer ??= _kafkaProducerFactory(provider);
 
                 var middlewares = _middlewareBuilder
-                    .Build(provider)
-                    .ToArray();
+                    .Build();
 
                 var pipeline = new Pipeline(middlewares);
 

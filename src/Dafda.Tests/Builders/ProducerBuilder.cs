@@ -40,7 +40,7 @@ namespace Dafda.Tests.Builders
         public Producer Build()
         {
             var serviceCollection = new ServiceCollection();
-            var middlewareBuilder = new MiddlewareBuilder<OutgoingMessageContext>(serviceCollection);
+            var middlewareBuilder = new MiddlewareBuilder<OutgoingMessageContext>();
             middlewareBuilder
                 .Register(new PayloadDescriptionMiddleware(_outgoingMessageRegistry, _messageIdGenerator))
                 .Register(new SerializationMiddleware(new TopicPayloadSerializerRegistry(() => _payloadSerializer)))
@@ -48,8 +48,7 @@ namespace Dafda.Tests.Builders
 
             var provider = serviceCollection.BuildServiceProvider();
             var middlewares = middlewareBuilder
-                .Build(provider)
-                .ToArray();
+                .Build();
 
             var pipeline = new Pipeline(middlewares);
 

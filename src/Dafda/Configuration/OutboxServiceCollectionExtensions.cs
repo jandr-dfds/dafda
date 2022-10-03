@@ -26,7 +26,7 @@ namespace Dafda.Configuration
             {
                 var middlewares = configuration
                     .MiddlewareBuilder
-                    .Build(provider);
+                    .Build();
 
                 var pipeline = new Pipeline(middlewares);
 
@@ -55,7 +55,7 @@ namespace Dafda.Configuration
             {
                 var outboxUnitOfWorkFactory = provider.GetRequiredService<IOutboxUnitOfWorkFactory>();
                 var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
-                var middleware = configuration.MiddlewareBuilder.Build(provider);
+                var middleware = configuration.MiddlewareBuilder.Build();
                 var kafkaProducer = configuration.KafkaProducerFactory(provider);
                 var pipeline = new Pipeline(middleware);
                 var producer = new OutboxProducer(pipeline, provider, kafkaProducer);

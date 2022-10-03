@@ -1,6 +1,4 @@
-using System;
 using Dafda.Middleware;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Dafda.Tests.Middleware;
 
@@ -9,17 +7,16 @@ public class TestMiddlewareBuilder
     [Fact]
     public void can_register_middleware()
     {
-        var services = new ServiceCollection();
         var aa = MiddlewareFactory.CreateDummy<IContextA, IContextA>();
         var ab = MiddlewareFactory.CreateDummy<IContextA, IContextB>();
         var ba = MiddlewareFactory.CreateDummy<IContextB, IContextA>();
 
-        var middlewares = new MiddlewareBuilder<IContextA>(services)
+        var middlewares = new MiddlewareBuilder<IContextA>()
             .Register(aa)
             .Register(ab)
             .Register(ba)
             .Register(aa)
-            .Build(services.BuildServiceProvider());
+            .Build();
 
         Assert.Equal(new IMiddleware[]
         {
@@ -33,19 +30,18 @@ public class TestMiddlewareBuilder
     [Fact]
     public void can_register_all_middleware()
     {
-        var services = new ServiceCollection();
         var middleware1 = MiddlewareFactory.CreateDummy<IContextA, IContextA>();
         var middleware2 = MiddlewareFactory.CreateDummy<IContextA, IContextA>();
         var middleware3 = MiddlewareFactory.CreateDummy<IContextA, IContextA>();
 
-        var middlewares = new MiddlewareBuilder<IContextA>(services)
-            .RegisterAll(new IMiddleware<IContextA, IContextA>[]
+        var middlewares = new MiddlewareBuilder<IContextA>()
+            .RegisterAll(new[]
             {
                 middleware1,
                 middleware2,
                 middleware3
             })
-            .Build(services.BuildServiceProvider());
+            .Build();
 
         Assert.Equal(new IMiddleware[]
         {

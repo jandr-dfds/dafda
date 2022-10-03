@@ -22,7 +22,7 @@ namespace Dafda.Tests.Producing
         {
             var services = new ServiceCollection();
             services.AddLogging();
-            var options = new ProducerOptions(services);
+            var options = new ProducerOptions();
             options.WithBootstrapServers("dummy");
             var producerConfigurationStub = options.Build();
 
@@ -39,7 +39,7 @@ namespace Dafda.Tests.Producing
         public void returns_expected_when_getting_by_an_unknown_name()
         {
             var services = new ServiceCollection();
-            var options = new ProducerOptions(services);
+            var options = new ProducerOptions();
             options.WithBootstrapServers("dummy");
             var producerConfigurationStub = options.Build();
 
@@ -56,8 +56,7 @@ namespace Dafda.Tests.Producing
         {
             var sut = new ProducerRegistryBuilder().Build();
 
-            var services = new ServiceCollection();
-            var options = new ProducerOptions(services);
+            var options = new ProducerOptions();
             options.WithBootstrapServers("dummy");
             var producerConfiguration = options.Build();
             
@@ -80,7 +79,7 @@ namespace Dafda.Tests.Producing
             using (var sut = new ProducerRegistryBuilder().Build())
             {
                 var services = new ServiceCollection();
-                var options = new ProducerOptions(services);
+                var options = new ProducerOptions();
                 options.WithBootstrapServers("dummy");
                 options.WithKafkaProducerFactory(_ => spy);
                 var producerConfiguration = options.Build();

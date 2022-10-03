@@ -20,7 +20,7 @@ namespace Dafda.Tests.Consuming
 
             var services = new ServiceCollection();
             services.AddTransient(_ => handlerStub);
-            var middlewareBuilder = new MiddlewareBuilder<IncomingRawMessageContext>(services);
+            var middlewareBuilder = new MiddlewareBuilder<IncomingRawMessageContext>();
             middlewareBuilder
                 .Register(new DeserializationMiddleware(DeserializerStub.Returns(new FooMessage())))
                 .Register(new MessageHandlerMiddleware(registry))
@@ -45,7 +45,7 @@ namespace Dafda.Tests.Consuming
             var registry = new MessageHandlerRegistry();
 
             var services = new ServiceCollection();
-            var middlewareBuilder = new MiddlewareBuilder<IncomingRawMessageContext>(services);
+            var middlewareBuilder = new MiddlewareBuilder<IncomingRawMessageContext>();
             middlewareBuilder
                 .Register(new DeserializationMiddleware(DeserializerStub.Returns(new FooMessage())))
                 .Register(new MessageHandlerMiddleware(registry))

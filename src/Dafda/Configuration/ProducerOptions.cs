@@ -24,9 +24,9 @@ namespace Dafda.Configuration
         private MessageIdGenerator _messageIdGenerator = MessageIdGenerator.Default;
         private Func<IServiceProvider, KafkaProducer> _kafkaProducerFactory;
 
-        internal ProducerOptions(IServiceCollection services)
+        internal ProducerOptions()
         {
-            _middlewareBuilder = new MiddlewareBuilder<OutgoingMessageContext>(services);
+            _middlewareBuilder = new MiddlewareBuilder<OutgoingMessageContext>();
         }
 
         /// <summary>

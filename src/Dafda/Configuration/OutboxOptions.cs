@@ -26,7 +26,7 @@ namespace Dafda.Configuration
         internal OutboxOptions(IServiceCollection services)
         {
             _services = services;
-            _middlewareBuilder = new MiddlewareBuilder<OutboxMessageContext>(services);
+            _middlewareBuilder = new MiddlewareBuilder<OutboxMessageContext>();
         }
 
         /// <summary>

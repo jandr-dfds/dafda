@@ -10,7 +10,7 @@ namespace Dafda.Tests.Configuration
         [Fact]
         public void Can_validate_configuration()
         {
-            var sut = new ProducerOptions(new ServiceCollection());
+            var sut = new ProducerOptions();
 
             Assert.Throws<InvalidConfigurationException>(() => sut.Build());
         }
@@ -18,7 +18,7 @@ namespace Dafda.Tests.Configuration
         [Fact]
         public void Can_build_minimal_configuration()
         {
-            var sut = new ProducerOptions(new ServiceCollection());
+            var sut = new ProducerOptions();
             sut.WithBootstrapServers("foo");
 
             var configuration = sut.Build();
@@ -36,7 +36,7 @@ namespace Dafda.Tests.Configuration
         [Fact]
         public void Can_build_producer_configuration()
         {
-            var sut = new ProducerOptions(new ServiceCollection());
+            var sut = new ProducerOptions();
             sut.WithConfigurationSource(new ConfigurationSourceStub(
                 (key: ConfigurationKeys.BootstrapServers, value: "foo"),
                 (key: ConfigurationKeys.SaslUsername, value: "username"),
@@ -61,7 +61,7 @@ namespace Dafda.Tests.Configuration
         public void Has_expected_message_id_generator()
         {
             var dummy = MessageIdGenerator.Default;
-            var sut = new ProducerOptions(new ServiceCollection());
+            var sut = new ProducerOptions();
             sut.WithBootstrapServers("foo");
             sut.WithMessageIdGenerator(dummy);
 

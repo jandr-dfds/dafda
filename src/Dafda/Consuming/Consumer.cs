@@ -11,8 +11,8 @@ namespace Dafda.Consuming
         private readonly ILogger<Consumer> _logger;
         private readonly Func<ConsumerScope> _consumerScopeFactory;
         private readonly IServiceScopeFactory _serviceScopeFactory;
-        private readonly MiddlewareBuilder<IncomingRawMessageContext> _middlewareBuilder;
         private readonly bool _isAutoCommitEnabled;
+        private readonly Pipeline _pipeline;
 
         public Consumer(
             ILogger<Consumer> logger,
@@ -24,8 +24,8 @@ namespace Dafda.Consuming
             _logger = logger;
             _consumerScopeFactory = consumerScopeFactory;
             _serviceScopeFactory = serviceScopeFactory;
-            _middlewareBuilder = middlewareBuilder;
             _isAutoCommitEnabled = isAutoCommitEnabled;
+            _pipeline = new Pipeline(middlewareBuilder.Build());
         }
 
         public async Task Consume(Cancelable cancelable)
@@ -48,11 +48,9 @@ namespace Dafda.Consuming
                 _logger.LogDebug("UnitOfWork:Begin");
 
                 // initialize pipeline
-                var middlewares = _middlewareBuilder.Build(scope.ServiceProvider);
-                var pipeline = new Pipeline(middlewares);
 
                 // execute pipeline
-                await pipeline.Invoke(new IncomingRawMessageContext(messageResult.Message, new RootMiddlewareContext(scope.ServiceProvider)));
+                await _pipeline.Invoke(new IncomingRawMessageContext(messageResult.Message, new RootMiddlewareContext(scope.ServiceProvider)));
 
                 _logger.LogDebug("UnitOfWork:End");
             }
