@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Dafda.Consuming;
 using Dafda.Serializing;
@@ -17,16 +16,18 @@ namespace Dafda.Producing
             _messageIdGenerator = messageIdGenerator;
         }
 
-        public PayloadDescriptor Create(object message, Metadata headers)
+        public PayloadDescriptor Create(OutgoingMessage outgoingMessage)
         {
+            var message = outgoingMessage.Message;
             var registration = _outgoingMessageRegistry.GetRegistration(message);
             if (registration == null)
             {
                 throw new InvalidOperationException($"No outgoing message registered for '{message.GetType().Name}'");
             }
 
+            var headers = outgoingMessage.Metadata;
             var messageId = string.IsNullOrEmpty(headers.MessageId) ? _messageIdGenerator.NextMessageId() : headers.MessageId;
-            var metadata = new Metadata( headers.AsEnumerable().ToDictionary( k => k.Key, v => v.Value ) )
+            var metadata = new Metadata(headers.AsEnumerable().ToDictionary(k => k.Key, v => v.Value))
             {
                 CausationId = string.IsNullOrEmpty(headers.CausationId) ? messageId : headers.CausationId,
                 CorrelationId = string.IsNullOrEmpty(headers.CorrelationId) ? messageId : headers.CorrelationId,
@@ -40,16 +41,6 @@ namespace Dafda.Producing
                 messageData: message,
                 messageHeaders: metadata.AsEnumerable()
             );
-        }
-
-        public PayloadDescriptor Create(object message, MessageHandlerContext context, Dictionary<string, string> headers)
-        {
-            var metadata = new Metadata(headers)
-            {
-                CorrelationId = context.CorrelationId,
-                CausationId = context.MessageId
-            };
-            return Create(message, metadata);
         }
     }
 }

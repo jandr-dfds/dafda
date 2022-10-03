@@ -76,7 +76,7 @@ namespace Dafda.Outbox
 
         private async Task<OutboxEntry> CreateOutboxEntry(object message, Metadata metadata)
         {
-            var payloadDescriptor = _payloadDescriptorFactory.Create(message, metadata);
+            var payloadDescriptor = _payloadDescriptorFactory.Create(new OutgoingMessage(message, metadata));
 
             var messageId = Guid.Parse(payloadDescriptor.MessageId);
 

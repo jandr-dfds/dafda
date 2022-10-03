@@ -1,4 +1,3 @@
-using Dafda.Configuration;
 using Dafda.Producing;
 
 namespace Dafda.Middleware;

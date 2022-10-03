@@ -1,26 +1,20 @@
-using Dafda.Consuming;
+using Dafda.Producing;
 
 namespace Dafda.Middleware;
 
 /// <summary>
-/// Context containing the outgoing message and it's <see cref="Metadata"/>.
+/// Context containing the <see cref="OutgoingMessage"/>.
 /// </summary>
 public class OutgoingMessageContext : IMiddlewareContext
 {
     /// <summary/>
-    public OutgoingMessageContext(object message, Metadata metadata)
+    public OutgoingMessageContext(OutgoingMessage message)
     {
         Message = message;
-        Metadata = metadata;
     }
 
     /// <summary>
     /// The outgoing message
     /// </summary>
-    public object Message { get; }
-
-    /// <summary>
-    /// The metadata for the outgoing message.
-    /// </summary>
-    public Metadata Metadata { get; }
+    public OutgoingMessage Message { get; }
 }

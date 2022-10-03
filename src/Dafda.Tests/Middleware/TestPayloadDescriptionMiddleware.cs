@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Dafda.Consuming;
 using Dafda.Middleware;
+using Dafda.Producing;
 using Dafda.Serializing;
 using Dafda.Tests.Builders;
 using Dafda.Tests.TestDoubles;
@@ -21,7 +22,7 @@ public class TestPayloadDescriptionMiddleware
         var sut = new PayloadDescriptionMiddleware(outgoingMessageRegistry, new MessageIdGeneratorStub(() => "dummy-id"));
         var dummyMessage = new object();
 
-        await sut.Invoke(new OutgoingMessageContext(dummyMessage, new Metadata()), context =>
+        await sut.Invoke(new OutgoingMessageContext(new OutgoingMessage(dummyMessage, new Metadata())), context =>
         {
             payloadDescriptor = context.PayloadDescriptor;
             return Task.CompletedTask;

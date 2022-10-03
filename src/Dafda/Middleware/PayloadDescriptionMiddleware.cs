@@ -15,7 +15,7 @@ internal class PayloadDescriptionMiddleware : IMiddleware<OutgoingMessageContext
 
     public Task Invoke(OutgoingMessageContext context, Func<PayloadDescriptorContext, Task> next)
     {
-        var payloadDescriptor = _payloadDescriptorFactory.Create(context.Message, context.Metadata);
+        var payloadDescriptor = _payloadDescriptorFactory.Create(context.Message);
 
         return next(new PayloadDescriptorContext(payloadDescriptor));
     }
