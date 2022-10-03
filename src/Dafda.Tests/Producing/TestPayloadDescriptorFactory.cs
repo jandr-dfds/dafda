@@ -2,9 +2,6 @@
 using System.Linq;
 using Dafda.Consuming;
 using Dafda.Producing;
-using Dafda.Tests.Builders;
-using Dafda.Tests.TestDoubles;
-using Xunit;
 
 namespace Dafda.Tests.Producing
 {

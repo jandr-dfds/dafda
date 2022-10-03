@@ -1,6 +1,5 @@
 ﻿using Dafda.Configuration;
 using Dafda.Tests.Attributes;
-using Xunit;
 
 namespace Dafda.Tests.Configuration
 {

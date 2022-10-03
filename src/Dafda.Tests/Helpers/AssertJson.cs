@@ -1,6 +1,4 @@
-﻿using Xunit;
-
-namespace Dafda.Tests.Helpers
+﻿namespace Dafda.Tests.Helpers
 {
     public static class AssertJson
     {

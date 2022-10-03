@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Dafda.Outbox;
-using Xunit;
 
 namespace Dafda.Tests.Outbox
 {

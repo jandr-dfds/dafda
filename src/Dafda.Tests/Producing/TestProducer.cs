@@ -1,10 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Dafda.Consuming;
-using Dafda.Tests.Builders;
-using Dafda.Tests.Helpers;
-using Dafda.Tests.TestDoubles;
-using Xunit;
 
 namespace Dafda.Tests.Producing
 {

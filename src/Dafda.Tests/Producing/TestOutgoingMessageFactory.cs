@@ -1,9 +1,4 @@
-﻿using System.Text.Json;
-using System.Threading.Tasks;
-using Dafda.Tests.Builders;
-using Dafda.Tests.Helpers;
-using Dafda.Tests.TestDoubles;
-using Xunit;
+﻿using System.Threading.Tasks;
 
 namespace Dafda.Tests.Producing
 {

@@ -1,7 +1,6 @@
 ﻿using System;
 using Dafda.Consuming;
 using Dafda.Middleware;
-using Dafda.Tests.TestDoubles;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

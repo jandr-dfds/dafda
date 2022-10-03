@@ -22,4 +22,11 @@
     <ProjectReference Include="..\Dafda\Dafda.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Using Include="Dafda.Tests.Builders" />
+    <Using Include="Dafda.Tests.Helpers" />
+    <Using Include="Dafda.Tests.TestDoubles" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+  
 </Project>

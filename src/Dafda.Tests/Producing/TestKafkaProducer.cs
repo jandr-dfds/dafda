@@ -1,7 +1,4 @@
 using System.Threading.Tasks;
-using Dafda.Tests.Builders;
-using Dafda.Tests.TestDoubles;
-using Xunit;
 
 namespace Dafda.Tests.Producing
 {

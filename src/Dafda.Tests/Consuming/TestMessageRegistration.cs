@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Dafda.Consuming;
-using Dafda.Tests.Builders;
-using Xunit;
 
 namespace Dafda.Tests.Consuming
 {

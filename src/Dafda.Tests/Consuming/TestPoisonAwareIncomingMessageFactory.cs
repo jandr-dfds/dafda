@@ -1,9 +1,6 @@
 using System;
-using Dafda.Configuration;
 using Dafda.Consuming;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
-using Xunit;
 
 namespace Dafda.Tests.Consuming
 {

@@ -1,6 +1,5 @@
 using Dafda.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
 
 namespace Dafda.Tests.Configuration
 {

@@ -2,12 +2,9 @@
 using System.Threading.Tasks;
 using Dafda.Configuration;
 using Dafda.Consuming;
-using Dafda.Tests.Builders;
-using Dafda.Tests.TestDoubles;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
-using Xunit;
 
 namespace Dafda.Tests.Configuration
 {

@@ -1,8 +1,6 @@
 using System.Threading.Tasks;
 using Dafda.Consuming;
 using Dafda.Middleware;
-using Dafda.Tests.Builders;
-using Xunit;
 
 namespace Dafda.Tests.Middleware;
 

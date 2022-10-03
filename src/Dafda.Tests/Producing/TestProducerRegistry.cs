@@ -1,11 +1,6 @@
 using Dafda.Configuration;
 using Dafda.Producing;
-using Dafda.Serializing;
-using Dafda.Tests.Builders;
-using Dafda.Tests.TestDoubles;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Abstractions;
-using Xunit;
 
 namespace Dafda.Tests.Producing
 {

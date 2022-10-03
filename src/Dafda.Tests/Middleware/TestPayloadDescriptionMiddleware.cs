@@ -4,9 +4,6 @@ using Dafda.Consuming;
 using Dafda.Middleware;
 using Dafda.Producing;
 using Dafda.Serializing;
-using Dafda.Tests.Builders;
-using Dafda.Tests.TestDoubles;
-using Xunit;
 
 namespace Dafda.Tests.Middleware;
 

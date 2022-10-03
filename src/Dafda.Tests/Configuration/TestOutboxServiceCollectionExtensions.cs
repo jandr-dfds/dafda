@@ -4,9 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dafda.Configuration;
 using Dafda.Outbox;
-using Dafda.Tests.TestDoubles;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
 
 namespace Dafda.Tests.Configuration
 {

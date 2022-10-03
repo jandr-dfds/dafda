@@ -1,9 +1,7 @@
 using System.Linq;
 using Dafda.Configuration;
 using Dafda.Producing;
-using Dafda.Tests.TestDoubles;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
 
 namespace Dafda.Tests.Configuration
 {

@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Dafda.Configuration;
-using Dafda.Tests.TestDoubles;
-using Xunit;
 using Xunit.Abstractions;
 
 namespace Dafda.Tests.Configuration
