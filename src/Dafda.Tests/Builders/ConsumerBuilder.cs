@@ -13,15 +13,15 @@ namespace Dafda.Tests.Builders
 
         private bool _enableAutoCommit;
         private IServiceScopeFactory _serviceScopeFactory;
-        private MiddlewareBuilder<IncomingRawMessageContext> _middlewareBuilder;
         private ILogger<Consumer> _logger;
+        private Pipeline _pipeline;
 
         public ConsumerBuilder()
         {
             _consumerScope = new ConsumerScopeStub(new MessageResultBuilder().Build());
             _serviceScopeFactory = new FakeServiceScopeFactory(type => throw new InvalidOperationException($"{type.Name} type registered"));
-            _middlewareBuilder = new MiddlewareBuilder<IncomingRawMessageContext>();
             _logger = NullLogger<Consumer>.Instance;
+            _pipeline = new Pipeline();
         }
 
         public ConsumerBuilder WithConsumerScope(ConsumerScope consumerScope)
@@ -42,9 +42,9 @@ namespace Dafda.Tests.Builders
             return this;
         }
 
-        public ConsumerBuilder WithMiddleware(MiddlewareBuilder<IncomingRawMessageContext> middlewareBuilder)
+        public ConsumerBuilder WithPipeline(Pipeline pipeline)
         {
-            _middlewareBuilder = middlewareBuilder;
+            _pipeline = pipeline;
             return this;
         }
 
@@ -55,7 +55,7 @@ namespace Dafda.Tests.Builders
         }
 
         public Consumer Build() =>
-            new Consumer(_logger, () => _consumerScope, _serviceScopeFactory, _middlewareBuilder, _enableAutoCommit);
+            new Consumer(_logger, () => _consumerScope, _serviceScopeFactory, _pipeline, _enableAutoCommit);
 
         private class FakeServiceScopeFactory : IServiceScopeFactory, IServiceScope, IServiceProvider
         {

@@ -29,17 +29,17 @@ namespace Dafda.Configuration
                     provider.GetRequiredService<ILogger<Consumer>>(),
                     () => configuration.ConsumerScopeFactory(provider),
                     provider.GetRequiredService<IServiceScopeFactory>(),
-                    configuration.MiddlewareBuilder,
+                    configuration.Pipeline,
                     configuration.EnableAutoCommit
                 );
 
                 return new ConsumerHostedService(
-                logger: provider.GetRequiredService<ILogger<ConsumerHostedService>>(),
-                applicationLifetime: provider.GetRequiredService<IHostApplicationLifetime>(),
+                    logger: provider.GetRequiredService<ILogger<ConsumerHostedService>>(),
+                    applicationLifetime: provider.GetRequiredService<IHostApplicationLifetime>(),
                     consumer: consumer,
-                configuration.GroupId,
-                configuration.ConsumerErrorHandler
-            );
+                    configuration.GroupId,
+                    configuration.ConsumerErrorHandler
+                );
             }
             
             services.AddSingleton<IHostedService, ConsumerHostedService>(CreateConsumerHostedService);

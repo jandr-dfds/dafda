@@ -6,13 +6,14 @@ namespace Dafda.Configuration
 {
     internal class OutboxProducerConfiguration
     {
-        public OutboxProducerConfiguration(MiddlewareBuilder<OutgoingRawMessageContext> middlewareBuilder, Func<IServiceProvider, KafkaProducer> kafkaProducerFactory)
+        public OutboxProducerConfiguration(Func<IServiceProvider, KafkaProducer> kafkaProducerFactory, Pipeline pipeline)
         {
-            MiddlewareBuilder = middlewareBuilder;
             KafkaProducerFactory = kafkaProducerFactory;
+            Pipeline = pipeline;
         }
 
-        public MiddlewareBuilder<OutgoingRawMessageContext> MiddlewareBuilder { get; }
         public Func<IServiceProvider, KafkaProducer> KafkaProducerFactory { get; }
+
+        public Pipeline Pipeline { get; }
     }
 }

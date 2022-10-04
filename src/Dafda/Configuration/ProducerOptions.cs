@@ -211,13 +211,13 @@ namespace Dafda.Configuration
                 return new KafkaProducer(loggerFactory, configurations);
             };
 
+            var pipeline = new Pipeline(_middlewareBuilder.Build());
+
             return new ProducerConfiguration(
                 configurations,
                 _messageIdGenerator,
                 _kafkaProducerFactory,
-                _outgoingMessageRegistry,
-                _middlewareBuilder
-            );
+                pipeline);
         }
     }
 }

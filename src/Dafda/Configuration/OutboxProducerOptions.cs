@@ -156,7 +156,9 @@ namespace Dafda.Configuration
 
             _middlewareBuilder.Register(new DispatchMiddleware());
 
-            return new OutboxProducerConfiguration(_middlewareBuilder, _kafkaProducerFactory);
+            var pipeline = new Pipeline(_middlewareBuilder.Build());
+
+            return new OutboxProducerConfiguration(_kafkaProducerFactory, pipeline);
         }
 
         private class DefaultConfigurationSource : ConfigurationSource

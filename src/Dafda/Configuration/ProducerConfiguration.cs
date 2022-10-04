@@ -7,23 +7,21 @@ namespace Dafda.Configuration
 {
     internal class ProducerConfiguration
     {
-        public ProducerConfiguration(IDictionary<string, string> configuration,
+        public ProducerConfiguration(
+            IDictionary<string, string> configuration,
             MessageIdGenerator messageIdGenerator,
-            Func<IServiceProvider, KafkaProducer> kafkaProducerFactory,
-            OutgoingMessageRegistry outgoingMessageRegistry,
-            MiddlewareBuilder<OutgoingMessageContext> middlewareBuilder)
+            Func<IServiceProvider, KafkaProducer> kafkaProducerFactory, 
+            Pipeline pipeline)
         {
             KafkaConfiguration = configuration;
             MessageIdGenerator = messageIdGenerator;
             KafkaProducerFactory = kafkaProducerFactory;
-            OutgoingMessageRegistry = outgoingMessageRegistry;
-            MiddlewareBuilder = middlewareBuilder;
+            Pipeline = pipeline;
         }
 
         public IDictionary<string, string> KafkaConfiguration { get; }
         public MessageIdGenerator MessageIdGenerator { get; }
         public Func<IServiceProvider, KafkaProducer> KafkaProducerFactory { get; }
-        public OutgoingMessageRegistry OutgoingMessageRegistry { get; }
-        public MiddlewareBuilder<OutgoingMessageContext> MiddlewareBuilder { get; }
+        public Pipeline Pipeline { get; }
     }
 }

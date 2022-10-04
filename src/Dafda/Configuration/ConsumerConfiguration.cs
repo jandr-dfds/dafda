@@ -6,26 +6,24 @@ namespace Dafda.Configuration
 {
     internal class ConsumerConfiguration
     {
-        public ConsumerConfiguration(
-            Configuration configuration,
+        public ConsumerConfiguration(Configuration configuration,
             MessageHandlerRegistry messageHandlerRegistry,
             Func<IServiceProvider, ConsumerScope> consumerScopeFactory,
-            MiddlewareBuilder<IncomingRawMessageContext> middlewareBuilder,
+            Pipeline pipeline,
             ConsumerErrorHandler consumerErrorHandler)
         {
             KafkaConfiguration = configuration;
             MessageHandlerRegistry = messageHandlerRegistry;
             ConsumerScopeFactory = consumerScopeFactory;
-            MiddlewareBuilder = middlewareBuilder;
             ConsumerErrorHandler = consumerErrorHandler;
+            Pipeline = pipeline;
         }
 
         public Configuration KafkaConfiguration { get; }
         public MessageHandlerRegistry MessageHandlerRegistry { get; }
         public Func<IServiceProvider, ConsumerScope> ConsumerScopeFactory { get; }
-        public MiddlewareBuilder<IncomingRawMessageContext> MiddlewareBuilder { get; }
+        public Pipeline Pipeline { get; }
         public ConsumerErrorHandler ConsumerErrorHandler { get; }
-
         public string GroupId => KafkaConfiguration.GroupId;
         public bool EnableAutoCommit => KafkaConfiguration.EnableAutoCommit;
     }

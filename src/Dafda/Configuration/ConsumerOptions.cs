@@ -289,11 +289,13 @@ namespace Dafda.Configuration
                     readFromBeginning: _readFromBeginning);
             }
 
+            var pipeline = new Pipeline(_middlewareBuilder.Build());
+
             return new ConsumerConfiguration(
                 configuration,
                 _messageHandlerRegistry,
-                _consumerScopeFactory ?? DefaultConsumerScopeFactoryFactory,
-                _middlewareBuilder,
+                _consumerScopeFactory ?? DefaultConsumerScopeFactoryFactory, 
+                pipeline,
                 _consumerErrorHandler);
         }
     }

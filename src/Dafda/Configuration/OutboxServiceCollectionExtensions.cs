@@ -1,5 +1,4 @@
 using System;
-using Dafda.Middleware;
 using Dafda.Outbox;
 using Dafda.Producing;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,16 +21,7 @@ namespace Dafda.Configuration
             options?.Invoke(outboxOptions);
             var configuration = outboxOptions.Build();
 
-            services.AddTransient(provider =>
-            {
-                var middlewares = configuration
-                    .MiddlewareBuilder
-                    .Build();
-
-                var pipeline = new Pipeline(middlewares);
-
-                return new OutboxQueue(configuration.Notifier, pipeline, provider);
-            });
+            services.AddTransient(provider => new OutboxQueue(configuration.Notifier, configuration.Pipeline, provider));
         }
 
         /// <summary>
@@ -55,9 +45,8 @@ namespace Dafda.Configuration
             {
                 var outboxUnitOfWorkFactory = provider.GetRequiredService<IOutboxUnitOfWorkFactory>();
                 var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
-                var middleware = configuration.MiddlewareBuilder.Build();
                 var kafkaProducer = configuration.KafkaProducerFactory(provider);
-                var pipeline = new Pipeline(middleware);
+                var pipeline = configuration.Pipeline;
                 var producer = new OutboxProducer(pipeline, provider, kafkaProducer);
                 var outboxDispatcher = new OutboxDispatcher(loggerFactory, outboxUnitOfWorkFactory, producer);
 

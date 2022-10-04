@@ -137,10 +137,11 @@ namespace Dafda.Configuration
             _middlewareBuilder
                 .Register(new OutboxPayloadDescriptionMiddleware(_outgoingMessageRegistry, _messageIdGenerator))
                 .Register(new OutboxSerializationMiddleware(_topicPayloadSerializerRegistry))
-                .Register(new OutboxStorageMiddleware())
-                ;
+                .Register(new OutboxStorageMiddleware());
 
-            return new OutboxConfiguration(_notifier, _middlewareBuilder);
+            var pipeline = new Pipeline(_middlewareBuilder.Build());
+
+            return new OutboxConfiguration(_notifier, pipeline);
         }
 
         private class DoNotNotify : IOutboxNotifier

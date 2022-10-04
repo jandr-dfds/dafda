@@ -55,27 +55,22 @@ namespace Dafda.Producing
         {
             private readonly string _producerName;
             private readonly Func<IServiceProvider, KafkaProducer> _kafkaProducerFactory;
-            private readonly MiddlewareBuilder<OutgoingMessageContext> _middlewareBuilder;
 
             private KafkaProducer _kafkaProducer;
+            private readonly Pipeline _pipeline;
 
             public ProducerFactory(string producerName, ProducerConfiguration configuration)
             {
                 _producerName = producerName;
                 _kafkaProducerFactory = configuration.KafkaProducerFactory;
-                _middlewareBuilder = configuration.MiddlewareBuilder;
+                _pipeline = configuration.Pipeline;
             }
 
             public Producer Create(IServiceProvider provider)
             {
                 _kafkaProducer ??= _kafkaProducerFactory(provider);
 
-                var middlewares = _middlewareBuilder
-                    .Build();
-
-                var pipeline = new Pipeline(middlewares);
-
-                var producer = new Producer(pipeline, provider, _kafkaProducer)
+                var producer = new Producer(_pipeline, provider, _kafkaProducer)
                 {
                     Name = _producerName
                 };

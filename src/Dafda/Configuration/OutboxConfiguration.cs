@@ -5,13 +5,13 @@ namespace Dafda.Configuration
 {
     internal class OutboxConfiguration
     {
-        public OutboxConfiguration(IOutboxNotifier notifier, MiddlewareBuilder<OutboxMessageContext> middlewareBuilder)
+        public OutboxConfiguration(IOutboxNotifier notifier, Pipeline pipeline)
         {
             Notifier = notifier;
-            MiddlewareBuilder = middlewareBuilder;
+            Pipeline = pipeline;
         }
 
         public IOutboxNotifier Notifier { get; }
-        public MiddlewareBuilder<OutboxMessageContext> MiddlewareBuilder { get; }
+        public Pipeline Pipeline { get; }
     }
 }

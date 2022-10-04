@@ -31,7 +31,7 @@ namespace Dafda.Tests.Configuration
             var consumer = new ConsumerBuilder()
                 .WithConsumerScope(new ConsumerScopeStub(new MessageResultBuilder().Build()))
                 .WithEnableAutoCommit(consumerConfiguration.EnableAutoCommit)
-                .WithMiddleware(consumerConfiguration.MiddlewareBuilder)
+                .WithPipeline(consumerConfiguration.Pipeline)
                 .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
                 .Build();
 
@@ -64,7 +64,7 @@ namespace Dafda.Tests.Configuration
             var consumer = new ConsumerBuilder()
                 .WithConsumerScope(new ConsumerScopeStub(new MessageResultBuilder().Build()))
                 .WithEnableAutoCommit(consumerConfiguration.EnableAutoCommit)
-                .WithMiddleware(consumerConfiguration.MiddlewareBuilder)
+                .WithPipeline(consumerConfiguration.Pipeline)
                 .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
                 .Build();
 
@@ -97,7 +97,7 @@ namespace Dafda.Tests.Configuration
             var consumer = new ConsumerBuilder()
                 .WithConsumerScope(new ConsumerScopeStub(new MessageResultBuilder().Build()))
                 .WithEnableAutoCommit(consumerConfiguration.EnableAutoCommit)
-                .WithMiddleware(consumerConfiguration.MiddlewareBuilder)
+                .WithPipeline(consumerConfiguration.Pipeline)
                 .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
                 .Build();
 

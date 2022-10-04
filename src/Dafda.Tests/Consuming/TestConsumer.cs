@@ -31,7 +31,7 @@ namespace Dafda.Tests.Consuming
             var sut = new ConsumerBuilder()
                 .WithConsumerScope(new ConsumerScopeStub(new MessageResultBuilder().Build()))
                 .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
-                .WithMiddleware(middlewareBuilder)
+                .WithPipeline(new Pipeline(middlewareBuilder.Build()))
                 .Build();
 
             await sut.Consume(Consume.Once);
@@ -56,7 +56,7 @@ namespace Dafda.Tests.Consuming
             var sut = new ConsumerBuilder()
                 .WithConsumerScope(new ConsumerScopeStub(new MessageResultBuilder().Build()))
                 .WithServiceScopeFactory(serviceProvider.GetRequiredService<IServiceScopeFactory>())
-                .WithMiddleware(middlewareBuilder)
+                .WithPipeline(new Pipeline(middlewareBuilder.Build()))
                 .Build();
 
             await Assert.ThrowsAsync<MissingMessageHandlerRegistrationException>(
