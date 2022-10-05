@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Dafda.Configuration
 {
-    internal class ConfigurationKeys : IEnumerable<string>
+    internal class ConfigurationKeys : IEnumerable<ConfigurationKeys.Key>
     {
         public const string GroupId = "group.id";
         public const string EnableAutoCommit = "enable.auto.commit";
@@ -22,10 +22,10 @@ namespace Dafda.Configuration
 
         public static readonly ConfigurationKeys Consumer = new()
         {
+            { BootstrapServers, true },
             { GroupId, true },
             EnableAutoCommit,
             AllowAutoCreateTopics,
-            { BootstrapServers, true },
             BrokerVersionFallback,
             ApiVersionFallbackMs,
             SslCaLocation,
@@ -47,20 +47,20 @@ namespace Dafda.Configuration
             SecurityProtocol,
         };
 
-        private readonly List<KeyWrapper> _keys = new();
-        private readonly HashSet<string> _uniqueKeys = new();
+        private readonly List<Key> _keys = new();
 
-        public string[] Required => _keys.Where(x => x.Required).Select(x => x.Key).ToArray();
+        public string[] Required => _keys.Where(x => x.Required).Select(x => x.ToString()).ToArray();
 
         public void Add(string key, bool required = false)
         {
-            _keys.Add(new KeyWrapper(key, required));
-            _uniqueKeys.Add(key);
+            var keyWrapper = new Key(key, required);
+
+            _keys.Add(keyWrapper);
         }
 
-        public IEnumerator<string> GetEnumerator()
+        public IEnumerator<Key> GetEnumerator()
         {
-            return _uniqueKeys.GetEnumerator();
+            return _keys.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -68,6 +68,27 @@ namespace Dafda.Configuration
             return GetEnumerator();
         }
 
-        private record KeyWrapper(string Key, bool Required = false);
+        public class Key
+        {
+            private readonly string _key;
+
+            public Key(string key, bool required = false)
+            {
+                _key = key;
+                Required = required;
+            }
+
+            public bool Required { get; }
+
+            public override string ToString()
+            {
+                return _key;
+            }
+
+            public static implicit operator string(Key key)
+            {
+                return key.ToString();
+            } 
+        }
     }
 }

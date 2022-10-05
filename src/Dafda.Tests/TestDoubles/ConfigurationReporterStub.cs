@@ -11,11 +11,11 @@ namespace Dafda.Tests.TestDoubles
             _reportContent = reportContent;
         }
 
-        public override void AddMissing(string key, string source, params string[] attemptedKeys)
+        public override void AddMissing(string key, string source, bool required, params string[] attemptedKeys)
         {
         }
 
-        public override void AddValue(string key, string source, string value, string acceptedKey)
+        public override void AddValue(string key, string source, string value, string acceptedKey, bool required)
         {
         }
 

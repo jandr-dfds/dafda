@@ -1,3 +1,4 @@
+using System.Linq;
 using Dafda.Configuration;
 using Xunit;
 
@@ -26,10 +27,10 @@ namespace Dafda.Tests.Configuration
         {
             Assert.Equal(new[]
             {
+                ConfigurationKeys.BootstrapServers,
                 ConfigurationKeys.GroupId,
                 ConfigurationKeys.EnableAutoCommit,
                 ConfigurationKeys.AllowAutoCreateTopics,
-                ConfigurationKeys.BootstrapServers,
                 ConfigurationKeys.BrokerVersionFallback,
                 ConfigurationKeys.ApiVersionFallbackMs,
                 ConfigurationKeys.SslCaLocation,
@@ -37,7 +38,7 @@ namespace Dafda.Tests.Configuration
                 ConfigurationKeys.SaslPassword,
                 ConfigurationKeys.SaslMechanisms,
                 ConfigurationKeys.SecurityProtocol
-            }, ConfigurationKeys.Consumer);
+            }, ConfigurationKeys.Consumer.Select(x => x.ToString()));
         }
 
         [Fact]
@@ -45,8 +46,8 @@ namespace Dafda.Tests.Configuration
         {
             Assert.Equal(new[]
             {
-                ConfigurationKeys.GroupId,
-                ConfigurationKeys.BootstrapServers
+                ConfigurationKeys.BootstrapServers,
+                ConfigurationKeys.GroupId
             }, ConfigurationKeys.Consumer.Required);
         }
 
@@ -63,7 +64,7 @@ namespace Dafda.Tests.Configuration
                 ConfigurationKeys.SaslPassword,
                 ConfigurationKeys.SaslMechanisms,
                 ConfigurationKeys.SecurityProtocol
-            }, ConfigurationKeys.Producer);
+            }, ConfigurationKeys.Producer.Select(x => x.ToString()));
         }
 
         [Fact]

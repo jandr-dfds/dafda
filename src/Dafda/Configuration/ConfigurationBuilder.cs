@@ -73,7 +73,7 @@ namespace Dafda.Configuration
             return configurations;
         }
 
-        private string GetByKey(string key)
+        private string GetByKey(ConfigurationKeys.Key key)
         {
             foreach (var namingConvention in NamingConventions)
             {
@@ -81,12 +81,12 @@ namespace Dafda.Configuration
                 var value = ConfigurationSource.GetByKey(attemptedKey);
                 if (value != null)
                 {
-                    ConfigurationReporter.AddValue(key, GetSourceName(), value, attemptedKey);
+                    ConfigurationReporter.AddValue(key, GetSourceName(), value, attemptedKey, key.Required);
                     return value;
                 }
             }
 
-            ConfigurationReporter.AddMissing(key, GetSourceName(), NamingConventions.GetAttemptedKeys(key));
+            ConfigurationReporter.AddMissing(key, GetSourceName(), key.Required, NamingConventions.GetAttemptedKeys(key));
 
             return null;
         }

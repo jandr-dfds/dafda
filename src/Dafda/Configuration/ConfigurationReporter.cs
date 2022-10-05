@@ -17,14 +17,14 @@ namespace Dafda.Configuration
         {
         }
 
-        public virtual void AddMissing(string key, string source, params string[] attemptedKeys)
+        public virtual void AddMissing(string key, string source, bool required, params string[] attemptedKeys)
         {
-            _items.Add(new Item(key, source, "MISSING", string.Join(", ", attemptedKeys), true));
+            _items.Add(new Item(key, source, "MISSING", string.Join(", ", attemptedKeys), required));
         }
 
-        public virtual void AddValue(string key, string source, string value, string acceptedKey)
+        public virtual void AddValue(string key, string source, string value, string acceptedKey, bool required)
         {
-            _items.Add(new Item(key, source, value, acceptedKey, true));
+            _items.Add(new Item(key, source, value, acceptedKey, required));
         }
 
         public virtual void AddManual(string key, string value)

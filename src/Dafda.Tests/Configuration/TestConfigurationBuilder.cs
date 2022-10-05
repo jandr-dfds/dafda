@@ -142,7 +142,7 @@ namespace Dafda.Tests.Configuration
         {
             var sut = ConfigurationReporter.CreateDefault();
 
-            new ConfigurationBuilder(new ConfigurationKeys { "key1", "key2" })
+            new ConfigurationBuilder(new ConfigurationKeys { "key1", { "key2", true } })
                 .WithConfigurationSource(new ConfigurationSourceStub(
                     ("KEY2", "value")
                 ))
@@ -163,7 +163,7 @@ namespace Dafda.Tests.Configuration
                 $"  key  source                  value   keys{NL}" +
                 $"-------------------------------------------------{NL}" +
                 $"  key3 MANUAL                  value   {NL}" +
-                $"R key1 ConfigurationSourceStub MISSING key1, KEY1{NL}" +
+                $"  key1 ConfigurationSourceStub MISSING key1, KEY1{NL}" +
                 $"R key2 ConfigurationSourceStub value   KEY2{NL}",
                 report);
         }
