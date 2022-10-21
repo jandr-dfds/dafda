@@ -24,7 +24,7 @@ namespace Dafda.Configuration
         private Func<IServiceProvider, ConsumerScope> _consumerScopeFactory;
         private bool _readFromBeginning;
         private IDeserializer _deserializer;
-        private ConsumerErrorHandler _consumerErrorHandler = ConsumerErrorHandler.Default;
+        private EvaluateError _evaluateError;
 
         internal ConsumerOptions(IServiceCollection services)
         {
@@ -32,6 +32,7 @@ namespace Dafda.Configuration
             _messageHandlerRegistry = new MessageHandlerRegistry();
             _middlewareBuilder = new MiddlewareBuilder<IncomingRawMessageContext>();
             _deserializer = new Deserializer(_messageHandlerRegistry);
+            _evaluateError = _ => Task.FromResult(ConsumerFailureStrategy.Default);
         }
 
         /// <summary>
@@ -237,7 +238,7 @@ namespace Dafda.Configuration
         /// <see cref="ConsumerFailureStrategy"/>.</param>
         public void WithConsumerErrorHandler(Func<Exception, Task<ConsumerFailureStrategy>> failureEvaluation)
         {
-            _consumerErrorHandler = new ConsumerErrorHandler(failureEvaluation);
+            _evaluateError = new EvaluateError(failureEvaluation);
         }
 
         /// <summary>
@@ -296,7 +297,7 @@ namespace Dafda.Configuration
                 _messageHandlerRegistry,
                 _consumerScopeFactory ?? DefaultConsumerScopeFactoryFactory, 
                 pipeline,
-                _consumerErrorHandler);
+                _evaluateError);
         }
     }
 }

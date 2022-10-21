@@ -10,12 +10,12 @@ namespace Dafda.Configuration
             MessageHandlerRegistry messageHandlerRegistry,
             Func<IServiceProvider, ConsumerScope> consumerScopeFactory,
             Pipeline pipeline,
-            ConsumerErrorHandler consumerErrorHandler)
+            EvaluateError evaluateError)
         {
             KafkaConfiguration = configuration;
             MessageHandlerRegistry = messageHandlerRegistry;
             ConsumerScopeFactory = consumerScopeFactory;
-            ConsumerErrorHandler = consumerErrorHandler;
+            EvaluateError = evaluateError;
             Pipeline = pipeline;
         }
 
@@ -23,7 +23,7 @@ namespace Dafda.Configuration
         public MessageHandlerRegistry MessageHandlerRegistry { get; }
         public Func<IServiceProvider, ConsumerScope> ConsumerScopeFactory { get; }
         public Pipeline Pipeline { get; }
-        public ConsumerErrorHandler ConsumerErrorHandler { get; }
+        public EvaluateError EvaluateError { get; }
         public string GroupId => KafkaConfiguration.GroupId;
         public bool EnableAutoCommit => KafkaConfiguration.EnableAutoCommit;
     }

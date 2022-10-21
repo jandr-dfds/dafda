@@ -33,13 +33,13 @@ namespace Dafda.Configuration
                     configuration.EnableAutoCommit
                 );
 
+                var applicationLifetime = provider.GetRequiredService<IHostApplicationLifetime>();
+                var errorHandler = new ConsumerErrorHandler(configuration.EvaluateError, applicationLifetime);
                 return new ConsumerHostedService(
                     logger: provider.GetRequiredService<ILogger<ConsumerHostedService>>(),
-                    applicationLifetime: provider.GetRequiredService<IHostApplicationLifetime>(),
                     consumer: consumer,
-                    configuration.GroupId,
-                    configuration.ConsumerErrorHandler
-                );
+                    errorHandler: errorHandler,
+                    groupId: configuration.GroupId);
             }
             
             services.AddSingleton<IHostedService, ConsumerHostedService>(CreateConsumerHostedService);

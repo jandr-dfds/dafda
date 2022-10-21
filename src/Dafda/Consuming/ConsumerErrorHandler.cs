@@ -1,23 +1,33 @@
 using System;
 using System.Threading.Tasks;
 using Dafda.Configuration;
+using Microsoft.Extensions.Hosting;
 
 namespace Dafda.Consuming
 {
-    internal sealed class ConsumerErrorHandler
+    internal delegate Task<ConsumerFailureStrategy> EvaluateError(Exception exception);
+
+    internal class ConsumerErrorHandler
     {
-        public static readonly ConsumerErrorHandler Default = new(_ => Task.FromResult(ConsumerFailureStrategy.Default));
+        private readonly EvaluateError _evaluateError;
+        private readonly IHostApplicationLifetime _applicationLifetime;
 
-        private readonly Func<Exception, Task<ConsumerFailureStrategy>> _eval;
-
-        public ConsumerErrorHandler(Func<Exception, Task<ConsumerFailureStrategy>> eval)
+        public ConsumerErrorHandler(EvaluateError evaluateError, IHostApplicationLifetime applicationLifetime)
         {
-            _eval = eval;
+            _evaluateError = evaluateError;
+            _applicationLifetime = applicationLifetime;
         }
 
-        public Task<ConsumerFailureStrategy> Handle(Exception exception)
+        public async Task<bool> HandleError(Exception exception)
         {
-            return _eval(exception);
+
+            var failureStrategy = await _evaluateError(exception);
+            if (failureStrategy == ConsumerFailureStrategy.Default)
+            {
+                _applicationLifetime.StopApplication();
+                return false;
+            }
+            return true;
         }
     }
 }

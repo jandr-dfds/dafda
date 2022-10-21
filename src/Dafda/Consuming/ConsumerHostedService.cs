@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Dafda.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -10,18 +9,16 @@ namespace Dafda.Consuming
     internal class ConsumerHostedService : BackgroundService
     {
         private readonly ILogger<ConsumerHostedService> _logger;
-        private readonly IHostApplicationLifetime _applicationLifetime;
         private readonly Consumer _consumer;
-        private readonly string _groupId;
         private readonly ConsumerErrorHandler _consumerErrorHandler;
+        private readonly string _groupId;
 
-        public ConsumerHostedService(ILogger<ConsumerHostedService> logger, IHostApplicationLifetime applicationLifetime, Consumer consumer, string groupId, ConsumerErrorHandler consumerErrorHandler)
+        public ConsumerHostedService(ILogger<ConsumerHostedService> logger, Consumer consumer, ConsumerErrorHandler errorHandler, string groupId)
         {
             _logger = logger;
-            _applicationLifetime = applicationLifetime;
             _consumer = consumer;
+            _consumerErrorHandler = errorHandler;
             _groupId = groupId;
-            _consumerErrorHandler = consumerErrorHandler;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -31,28 +28,28 @@ namespace Dafda.Consuming
 
         public async Task ConsumeLoop(Cancelable cancelable)
         {
-            while (true)
+            while (await Consume(cancelable))
             {
-                try
-                {
-                    _logger.LogDebug("ConsumerHostedService [{GroupId}] started", _groupId);
-                    await _consumer.Consume(cancelable);
-                }
-                catch (OperationCanceledException)
-                {
-                    _logger.LogDebug("ConsumerHostedService [{GroupId}] cancelled", _groupId);
-                    break;
-                }
-                catch (Exception err)
-                {
-                    _logger.LogError(err, "Unhandled error occurred while consuming messaging");
-                    var failureStrategy = await _consumerErrorHandler.Handle(err);
-                    if (failureStrategy == ConsumerFailureStrategy.Default)
-                    {
-                        _applicationLifetime.StopApplication();
-                        break;
-                    }
-                }
+            }
+        }
+
+        private async Task<bool> Consume(Cancelable cancelable)
+        {
+            try
+            {
+                _logger.LogDebug("ConsumerHostedService [{GroupId}] started", _groupId);
+                await _consumer.Consume(cancelable);
+                return false;
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogDebug("ConsumerHostedService [{GroupId}] cancelled", _groupId);
+                return false;
+            }
+            catch (Exception err)
+            {
+                _logger.LogError(err, "Unhandled error occurred while consuming messaging");
+                return await _consumerErrorHandler.HandleError(err);
             }
         }
     }
