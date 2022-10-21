@@ -24,11 +24,6 @@ namespace Dafda.Consuming
             _consumerErrorHandler = consumerErrorHandler;
         }
 
-        public Task ConsumeAll(Cancelable cancelable)
-        {
-            return _consumer.Consume(cancelable);
-        }
-
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             await ConsumeLoop(Until.CancelledBy(stoppingToken));
@@ -41,7 +36,7 @@ namespace Dafda.Consuming
                 try
                 {
                     _logger.LogDebug("ConsumerHostedService [{GroupId}] started", _groupId);
-                    await ConsumeAll(cancelable);
+                    await _consumer.Consume(cancelable);
                 }
                 catch (OperationCanceledException)
                 {

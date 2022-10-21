@@ -4,37 +4,11 @@ using Dafda.Configuration;
 using Dafda.Consuming;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Dafda.Tests.Configuration
 {
     public class TestConsumerServiceCollectionExtensions
     {
-        [Fact( /*Skip = "is this relevant for testing these extensions"*/)]
-        public async Task Can_consume_messages()
-        {
-            var spy = new ConsumerScopeSpy(new MessageResultBuilder()
-                .WithRawMessage(new RawMessageBuilder())
-                .Build()
-            );
-
-            var consumer = new ConsumerBuilder()
-                .WithConsumerScope(spy)
-                .Build();
-
-            using var consumerHostedService = new ConsumerHostedService(
-                NullLogger<ConsumerHostedService>.Instance,
-                new DummyApplicationLifetime(),
-                consumer,
-                "dummy.group.id",
-                ConsumerErrorHandler.Default
-            );
-
-            await consumerHostedService.ConsumeAll(Consume.Twice);
-
-            Assert.Equal(2, spy.ConsumeCalled);
-        }
-
         [Fact]
         public void add_single_consumer_registers_a_single_hosted_service()
         {

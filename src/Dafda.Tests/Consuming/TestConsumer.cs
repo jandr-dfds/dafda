@@ -9,6 +9,23 @@ namespace Dafda.Tests.Consuming
     public class TestConsumer
     {
         [Fact]
+        public async Task Can_consume_messages()
+        {
+            var spy = new ConsumerScopeSpy(new MessageResultBuilder()
+                .WithRawMessage(new RawMessageBuilder())
+                .Build()
+            );
+
+            var consumer = new ConsumerBuilder()
+                .WithConsumerScope(spy)
+                .Build();
+
+            await consumer.Consume(Consume.Twice);
+
+            Assert.Equal(2, spy.ConsumeCalled);
+        }
+
+        [Fact]
         public async Task invokes_expected_handler_when_consuming()
         {
             var wasCalled = false;
