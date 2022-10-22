@@ -1,5 +1,7 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
+using Dafda.Configuration;
 using Dafda.Consuming;
 using Dafda.Middleware;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,7 +32,7 @@ namespace Dafda.Tests.Consuming
         {
             var wasCalled = false;
 
-            var handlerStub = new MessageHandlerSpy<FooMessage>(() => { wasCalled = true; });
+            var handlerStub = new MessageHandlerSpy<FooMessage>(() => {wasCalled = true;});
 
             var registry = new MessageHandlerRegistry();
             registry.Register<FooMessage, MessageHandlerSpy<FooMessage>>("", "");
@@ -188,6 +190,48 @@ namespace Dafda.Tests.Consuming
             Assert.True(spy.Disposed);
         }
 
+        [Fact]
+        public async Task default_consumer_failure_strategy_will_stop_application()
+        {
+            var spy = new ApplicationLifetimeSpy();
+            var errorHandler = new ConsumerErrorHandler(_ => Task.FromResult(ConsumerFailureStrategy.Default), spy);
+
+            var consumer = new ConsumerBuilder()
+                .WithConsumerScope(new ErrorConsumerScope())
+                .WithErrorHandler(errorHandler)
+                .Build();
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => consumer.Consume(Consume.Once));
+
+            Assert.True(spy.StopApplicationWasCalled);
+        }
+
+        [Fact]
+        public async Task consumer_failure_strategy_is_evaluated()
+        {
+            const int failuresBeforeQuitting = 2;
+            var count = 0;
+
+            var spy = new ApplicationLifetimeSpy();
+            var errorHandler = new ConsumerErrorHandler(_ =>
+            {
+                if (++count > failuresBeforeQuitting)
+                {
+                    return Task.FromResult(ConsumerFailureStrategy.Default);
+                }
+
+                return Task.FromResult(ConsumerFailureStrategy.RestartConsumer);
+            }, spy);
+            var consumer = new ConsumerBuilder()
+                .WithConsumerScope(new ErrorConsumerScope())
+                .WithErrorHandler(errorHandler)
+                .Build();
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => consumer.Consume(Consume.Forever));
+
+            Assert.Equal(failuresBeforeQuitting + 1, count);
+        }
+
         #region helper classes
 
         public class FooMessage
@@ -214,6 +258,14 @@ namespace Dafda.Tests.Consuming
             public IncomingMessage Deserialize(RawMessage message)
             {
                 return new IncomingMessage(_messageType, new Metadata(), _instance);
+            }
+        }
+
+        private class ErrorConsumerScope : ConsumerScope
+        {
+            public override Task Consume(Func<MessageResult, Task> onMessageCallback, CancellationToken cancellationToken)
+            {
+                throw new InvalidOperationException();
             }
         }
 

@@ -1,86 +1,93 @@
 ﻿using System;
+using System.Threading.Tasks;
+using Dafda.Configuration;
 using Dafda.Consuming;
 using Dafda.Middleware;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Dafda.Tests.Builders
+namespace Dafda.Tests.Builders;
+
+internal class ConsumerBuilder
 {
-    internal class ConsumerBuilder
+    private ConsumerScope _consumerScope;
+    private IServiceScopeFactory _serviceScopeFactory;
+    private Pipeline _pipeline;
+    private ConsumerErrorHandler _errorHandler;
+    private bool _enableAutoCommit;
+
+    public ConsumerBuilder()
     {
-        private ConsumerScope _consumerScope;
+        _consumerScope = new ConsumerScopeStub(new MessageResultBuilder().Build());
+        _serviceScopeFactory = new FakeServiceScopeFactory(type => throw new InvalidOperationException($"{type.Name} type registered"));
+        _pipeline = new Pipeline();
+        _errorHandler = new ConsumerErrorHandler(_ => Task.FromResult(ConsumerFailureStrategy.Default), new DummyApplicationLifetime());
+    }
 
-        private bool _enableAutoCommit;
-        private IServiceScopeFactory _serviceScopeFactory;
-        private ILogger<Consumer> _logger;
-        private Pipeline _pipeline;
+    public ConsumerBuilder WithConsumerScope(ConsumerScope consumerScope)
+    {
+        _consumerScope = consumerScope;
+        return this;
+    }
 
-        public ConsumerBuilder()
+    public ConsumerBuilder WithEnableAutoCommit(bool enableAutoCommit)
+    {
+        _enableAutoCommit = enableAutoCommit;
+        return this;
+    }
+
+    public ConsumerBuilder WithServiceScopeFactory(IServiceScopeFactory serviceScopeFactory)
+    {
+        _serviceScopeFactory = serviceScopeFactory;
+        return this;
+    }
+
+    public ConsumerBuilder WithPipeline(Pipeline pipeline)
+    {
+        _pipeline = pipeline;
+        return this;
+    }
+
+    public ConsumerBuilder WithErrorHandler(ConsumerErrorHandler errorHandler)
+    {
+        _errorHandler = errorHandler;
+        return this;
+    }
+
+    public Consumer Build()
+    {
+        return new Consumer(
+            logger: NullLogger<Consumer>.Instance,
+            consumerScopeFactory: () => _consumerScope,
+            serviceScopeFactory: _serviceScopeFactory,
+            pipeline: _pipeline,
+            errorHandler: _errorHandler,
+            isAutoCommitEnabled: _enableAutoCommit);
+    }
+
+    private class FakeServiceScopeFactory : IServiceScopeFactory, IServiceScope, IServiceProvider
+    {
+        private readonly Func<Type, object> _resolve;
+
+        public FakeServiceScopeFactory(Func<Type, object> resolve)
         {
-            _consumerScope = new ConsumerScopeStub(new MessageResultBuilder().Build());
-            _serviceScopeFactory = new FakeServiceScopeFactory(type => throw new InvalidOperationException($"{type.Name} type registered"));
-            _logger = NullLogger<Consumer>.Instance;
-            _pipeline = new Pipeline();
+            _resolve = resolve;
         }
 
-        public ConsumerBuilder WithConsumerScope(ConsumerScope consumerScope)
+        public IServiceScope CreateScope()
         {
-            _consumerScope = consumerScope;
             return this;
         }
 
-        public ConsumerBuilder WithEnableAutoCommit(bool enableAutoCommit)
+        public void Dispose()
         {
-            _enableAutoCommit = enableAutoCommit;
-            return this;
         }
 
-        public ConsumerBuilder WithServiceScopeFactory(IServiceScopeFactory serviceScopeFactory)
+        public IServiceProvider ServiceProvider => this;
+
+        public object GetService(Type serviceType)
         {
-            _serviceScopeFactory = serviceScopeFactory;
-            return this;
-        }
-
-        public ConsumerBuilder WithPipeline(Pipeline pipeline)
-        {
-            _pipeline = pipeline;
-            return this;
-        }
-
-        public ConsumerBuilder With(ILogger<Consumer> logger)
-        {
-            _logger = logger;
-            return this;
-        }
-
-        public Consumer Build() =>
-            new Consumer(_logger, () => _consumerScope, _serviceScopeFactory, _pipeline, _enableAutoCommit);
-
-        private class FakeServiceScopeFactory : IServiceScopeFactory, IServiceScope, IServiceProvider
-        {
-            private readonly Func<Type, object> _resolve;
-
-            public FakeServiceScopeFactory(Func<Type, object> resolve)
-            {
-                _resolve = resolve;
-            }
-
-            public IServiceScope CreateScope()
-            {
-                return this;
-            }
-
-            public void Dispose()
-            {
-            }
-
-            public IServiceProvider ServiceProvider => this;
-
-            public object GetService(Type serviceType)
-            {
-                return _resolve(serviceType);
-            }
+            return _resolve(serviceType);
         }
     }
 }

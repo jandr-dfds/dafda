@@ -25,20 +25,21 @@ namespace Dafda.Configuration
 
             ConsumerHostedService CreateConsumerHostedService(IServiceProvider provider)
             {
+                var applicationLifetime = provider.GetRequiredService<IHostApplicationLifetime>();
+                var errorHandler = new ConsumerErrorHandler(configuration.EvaluateError, applicationLifetime);
+
                 var consumer = new Consumer(
                     provider.GetRequiredService<ILogger<Consumer>>(),
                     () => configuration.ConsumerScopeFactory(provider),
                     provider.GetRequiredService<IServiceScopeFactory>(),
                     configuration.Pipeline,
+                    errorHandler,
                     configuration.EnableAutoCommit
                 );
 
-                var applicationLifetime = provider.GetRequiredService<IHostApplicationLifetime>();
-                var errorHandler = new ConsumerErrorHandler(configuration.EvaluateError, applicationLifetime);
                 return new ConsumerHostedService(
                     logger: provider.GetRequiredService<ILogger<ConsumerHostedService>>(),
                     consumer: consumer,
-                    errorHandler: errorHandler,
                     groupId: configuration.GroupId);
             }
             
