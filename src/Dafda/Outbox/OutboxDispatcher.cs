@@ -40,7 +40,7 @@ namespace Dafda.Outbox
                 }
                 catch (Exception exception)
                 {
-                    _logger.LogError("Error while publishing outbox messages", exception);
+                    _logger.LogError(exception, "Error while publishing outbox messages");
                     throw;
                 }
 

@@ -27,7 +27,7 @@ namespace Dafda.Consuming
         public Task Handle(object _, MessageHandlerContext context)
         {
             Logger.LogInformation(
-                "Dafda is ignoring a message of type {messageType} with id {messageId}",
+                "Dafda is ignoring a message of type {MessageType} with id {MessageId}",
                 context.MessageType,
                 context.MessageId);
             return Task.CompletedTask;
