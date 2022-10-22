@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Dafda.Middleware;
 using Dafda.Outbox;
 using Dafda.Producing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -35,7 +36,7 @@ namespace Dafda.Configuration
         /// Use <see cref="Microsoft.Extensions.Configuration.IConfiguration"/> as the configuration source.
         /// </summary>
         /// <param name="configuration">The configuration instance.</param>
-        public void WithConfigurationSource(Microsoft.Extensions.Configuration.IConfiguration configuration)
+        public void WithConfigurationSource(IConfiguration configuration)
         {
             WithConfigurationSource(new DefaultConfigurationSource(configuration));
         }
@@ -159,21 +160,6 @@ namespace Dafda.Configuration
             var pipeline = new Pipeline(_middlewareBuilder.Build());
 
             return new OutboxProducerConfiguration(_kafkaProducerFactory, pipeline);
-        }
-
-        private class DefaultConfigurationSource : ConfigurationSource
-        {
-            private readonly Microsoft.Extensions.Configuration.IConfiguration _configuration;
-
-            public DefaultConfigurationSource(Microsoft.Extensions.Configuration.IConfiguration configuration)
-            {
-                _configuration = configuration;
-            }
-
-            public override string GetByKey(string key)
-            {
-                return _configuration[key];
-            }
         }
     }
 }

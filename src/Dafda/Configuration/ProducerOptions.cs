@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Dafda.Middleware;
 using Dafda.Producing;
 using Dafda.Serializing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -42,7 +43,7 @@ namespace Dafda.Configuration
         /// Use <see cref="Microsoft.Extensions.Configuration.IConfiguration"/> as the configuration source.
         /// </summary>
         /// <param name="configuration">The configuration instance.</param>
-        public void WithConfigurationSource(Microsoft.Extensions.Configuration.IConfiguration configuration)
+        public void WithConfigurationSource(IConfiguration configuration)
         {
             WithConfigurationSource(new DefaultConfigurationSource(configuration));
         }
@@ -174,21 +175,6 @@ namespace Dafda.Configuration
         public void WithPayloadSerializer(string topic, Func<IPayloadSerializer> payloadSerializerFactory)
         {
             _topicPayloadSerializerRegistry.Register(topic, payloadSerializerFactory);
-        }
-
-        private class DefaultConfigurationSource : ConfigurationSource
-        {
-            private readonly Microsoft.Extensions.Configuration.IConfiguration _configuration;
-
-            public DefaultConfigurationSource(Microsoft.Extensions.Configuration.IConfiguration configuration)
-            {
-                _configuration = configuration;
-            }
-
-            public override string GetByKey(string key)
-            {
-                return _configuration[key];
-            }
         }
 
         internal ProducerConfiguration Build()

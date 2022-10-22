@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Dafda.Consuming;
 using Dafda.Consuming.MessageFilters;
 using Dafda.Middleware;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -56,7 +57,7 @@ namespace Dafda.Configuration
         /// Use <see cref="Microsoft.Extensions.Configuration.IConfiguration"/> as the configuration source.
         /// </summary>
         /// <param name="configuration">The configuration instance.</param>
-        public void WithConfigurationSource(Microsoft.Extensions.Configuration.IConfiguration configuration)
+        public void WithConfigurationSource(IConfiguration configuration)
         {
             WithConfigurationSource(new DefaultConfigurationSource(configuration));
         }
@@ -248,21 +249,6 @@ namespace Dafda.Configuration
         public void WithDeserializer(IDeserializer deserializer)
         {
             _deserializer = deserializer;
-        }
-
-        private class DefaultConfigurationSource : ConfigurationSource
-        {
-            private readonly Microsoft.Extensions.Configuration.IConfiguration _configuration;
-
-            public DefaultConfigurationSource(Microsoft.Extensions.Configuration.IConfiguration configuration)
-            {
-                _configuration = configuration;
-            }
-
-            public override string GetByKey(string key)
-            {
-                return _configuration[key];
-            }
         }
 
         internal ConsumerConfiguration Build()
