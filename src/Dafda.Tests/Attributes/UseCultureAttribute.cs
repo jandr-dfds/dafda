@@ -14,11 +14,11 @@ namespace Dafda.Tests.Attributes
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class UseCultureAttribute : BeforeAfterTestAttribute
     {
-        readonly Lazy<CultureInfo> culture;
-        readonly Lazy<CultureInfo> uiCulture;
+        private readonly Lazy<CultureInfo> _culture;
+        private readonly Lazy<CultureInfo> _uiCulture;
 
-        CultureInfo originalCulture;
-        CultureInfo originalUICulture;
+        private CultureInfo _originalCulture;
+        private CultureInfo _originalUiCulture;
 
         /// <summary>
         /// Replaces the culture and UI culture of the current thread with
@@ -42,19 +42,19 @@ namespace Dafda.Tests.Attributes
         /// <param name="uiCulture">The name of the UI culture.</param>
         public UseCultureAttribute(string culture, string uiCulture)
         {
-            this.culture = new Lazy<CultureInfo>(() => new CultureInfo(culture, false));
-            this.uiCulture = new Lazy<CultureInfo>(() => new CultureInfo(uiCulture, false));
+            _culture = new Lazy<CultureInfo>(() => new CultureInfo(culture, false));
+            _uiCulture = new Lazy<CultureInfo>(() => new CultureInfo(uiCulture, false));
         }
 
         /// <summary>
         /// Gets the culture.
         /// </summary>
-        public CultureInfo Culture => culture.Value;
+        public CultureInfo Culture => _culture.Value;
 
         /// <summary>
         /// Gets the UI culture.
         /// </summary>
-        public CultureInfo UICulture => uiCulture.Value;
+        public CultureInfo UICulture => _uiCulture.Value;
 
         /// <summary>
         /// Stores the current <see cref="Thread.CurrentPrincipal" />
@@ -64,8 +64,8 @@ namespace Dafda.Tests.Attributes
         /// <param name="methodUnderTest">The method under test</param>
         public override void Before(MethodInfo methodUnderTest)
         {
-            originalCulture = Thread.CurrentThread.CurrentCulture;
-            originalUICulture = Thread.CurrentThread.CurrentUICulture;
+            _originalCulture = Thread.CurrentThread.CurrentCulture;
+            _originalUiCulture = Thread.CurrentThread.CurrentUICulture;
 
             Thread.CurrentThread.CurrentCulture = Culture;
             Thread.CurrentThread.CurrentUICulture = UICulture;
@@ -81,8 +81,8 @@ namespace Dafda.Tests.Attributes
         /// <param name="methodUnderTest">The method under test</param>
         public override void After(MethodInfo methodUnderTest)
         {
-            Thread.CurrentThread.CurrentCulture = originalCulture;
-            Thread.CurrentThread.CurrentUICulture = originalUICulture;
+            Thread.CurrentThread.CurrentCulture = _originalCulture;
+            Thread.CurrentThread.CurrentUICulture = _originalUiCulture;
 
             CultureInfo.CurrentCulture.ClearCachedData();
             CultureInfo.CurrentUICulture.ClearCachedData();

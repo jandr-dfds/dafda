@@ -4,10 +4,10 @@ namespace Dafda.Serializing
 {
     internal static class KeyValuePairExtension
     {
-        public static void Deconstruct<TKey, TValue>(this KeyValuePair<TKey, TValue> source, out TKey Key, out TValue Value)
+        public static void Deconstruct<TKey, TValue>(this KeyValuePair<TKey, TValue> source, out TKey key, out TValue value)
         {
-            Key = source.Key;
-            Value = source.Value;
+            key = source.Key;
+            value = source.Value;
         }
     }
 }
