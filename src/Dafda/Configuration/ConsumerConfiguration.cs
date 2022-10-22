@@ -24,7 +24,21 @@ namespace Dafda.Configuration
         public Func<IServiceProvider, ConsumerScope> ConsumerScopeFactory { get; }
         public Pipeline Pipeline { get; }
         public EvaluateError EvaluateError { get; }
-        public string GroupId => KafkaConfiguration.GroupId;
-        public bool EnableAutoCommit => KafkaConfiguration.EnableAutoCommit;
+        public string GroupId => KafkaConfiguration[ConfigurationKeys.GroupId];
+
+        public bool EnableAutoCommit
+        {
+            get
+            {
+                const bool defaultAutoCommitStrategy = true;
+
+                if (!KafkaConfiguration.TryGetValue(ConfigurationKeys.EnableAutoCommit, out var value))
+                {
+                    return defaultAutoCommitStrategy;
+                }
+
+                return bool.Parse(value);
+            }
+        }
     }
 }
