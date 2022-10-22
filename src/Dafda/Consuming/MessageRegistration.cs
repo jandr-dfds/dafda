@@ -31,7 +31,7 @@ namespace Dafda.Consuming
             // Passing a null topic, will cause Confluent to throw an AccessViolationException, which cannot be caught by the service, resulting in a hard crash without logs.
             if (topicName == null)
             {
-                throw new ArgumentException(nameof(topicName), "Topic must have a value");
+                throw new ArgumentException("Topic must have a value", nameof(topicName));
             }
 
             return topicName;
