@@ -1,4 +1,3 @@
-using System.Linq;
 using Dafda.Middleware;
 using Dafda.Producing;
 using Microsoft.Extensions.DependencyInjection;

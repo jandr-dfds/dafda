@@ -22,7 +22,7 @@ namespace Dafda.Tests.Outbox
             var sut = A.OutboxQueue
                 .With(
                     A.OutgoingMessageRegistry
-                        .Register<Message>("foo", "bar", @event => "baz")
+                        .Register<Message>("foo", "bar", _ => "baz")
                         .Build()
                 )
                 .With(spy)
@@ -41,7 +41,7 @@ namespace Dafda.Tests.Outbox
             var sut = A.OutboxQueue
                 .With(
                     A.OutgoingMessageRegistry
-                        .Register<Message>("foo", "bar", @event => "baz")
+                        .Register<Message>("foo", "bar", _ => "baz")
                         .Build()
                 )
                 .With(spy)

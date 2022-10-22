@@ -1,7 +1,6 @@
 using System.Linq;
 using Dafda.Configuration;
 using Dafda.Producing;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Dafda.Tests.Configuration
 {

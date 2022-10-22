@@ -34,7 +34,7 @@ namespace Dafda.Tests.Configuration
             {
                 options.WithBootstrapServers("dummy");
                 options.WithKafkaProducerFactory(_ => spy);
-                options.Register<DummyMessage>("foo", "bar", x => "baz");
+                options.Register<DummyMessage>("foo", "bar", _ => "baz");
             });
 
             var provider = services.BuildServiceProvider();

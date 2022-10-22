@@ -20,10 +20,10 @@ namespace Dafda.Tests.Configuration
             services.AddOutbox(options =>
             {
                 options.WithMessageIdGenerator(new MessageIdGeneratorStub(() => messageId.ToString()));
-                options.Register<DummyMessage>("foo", "bar", x => "baz");
+                options.Register<DummyMessage>("foo", "bar", _ => "baz");
                 options.WithPayloadSerializer("foo", new PayloadSerializerStub("dummy"));
 
-                options.WithOutboxEntryRepository(serviceProvider => fake);
+                options.WithOutboxEntryRepository(_ => fake);
             });
             var provider = services.BuildServiceProvider();
             var outbox = provider.GetRequiredService<OutboxQueue>();
@@ -48,8 +48,8 @@ namespace Dafda.Tests.Configuration
 
             services.AddOutbox(options =>
             {
-                options.Register<DummyMessage>("foo", "bar", x => "baz");
-                options.WithOutboxEntryRepository(serviceProvider => fake);
+                options.Register<DummyMessage>("foo", "bar", _ => "baz");
+                options.WithOutboxEntryRepository(_ => fake);
                 options.WithPayloadSerializer("foo", new PayloadSerializerStub("dummy", "expected payload format"));
             });
 
@@ -71,12 +71,12 @@ namespace Dafda.Tests.Configuration
 
             services.AddOutbox(options =>
             {
-                options.WithOutboxEntryRepository(serviceProvider => fake);
+                options.WithOutboxEntryRepository(_ => fake);
 
-                options.Register<DummyMessage>("foo", "bar", x => "baz");
+                options.Register<DummyMessage>("foo", "bar", _ => "baz");
                 options.WithPayloadSerializer("foo", new PayloadSerializerStub("foo_dummy", "expected foo payload format"));
 
-                options.Register<AnotherDummyMessage>("bar", "bar", x => "baz");
+                options.Register<AnotherDummyMessage>("bar", "bar", _ => "baz");
                 options.WithPayloadSerializer("bar", new PayloadSerializerStub("bar_dummy", "expected foo payload format"));
             });
 
@@ -105,9 +105,9 @@ namespace Dafda.Tests.Configuration
             services.AddOutbox(options =>
             {
                 options.WithNotifier(dummyOutboxNotifier);
-                options.Register<DummyMessage>("foo", "bar", x => "baz");
+                options.Register<DummyMessage>("foo", "bar", _ => "baz");
 
-                options.WithOutboxEntryRepository(serviceProvider => new FakeOutboxPersistence());
+                options.WithOutboxEntryRepository(_ => new FakeOutboxPersistence());
             });
             var provider = services.BuildServiceProvider();
             var outbox = provider.GetRequiredService<OutboxQueue>();
@@ -142,31 +142,12 @@ namespace Dafda.Tests.Configuration
         {
         }
 
-        private class DummyNotification : IOutboxListener
-        {
-            public Task<bool> Wait(CancellationToken cancellationToken)
-            {
-                return Task.FromResult(false);
-            }
-        }
-
         private class DummyNotifier : IOutboxNotifier
         {
             public Task Notify(CancellationToken cancellationToken)
             {
                 return Task.CompletedTask;
             }
-        }
-
-        public class OutboxListenerSpy : IOutboxListener
-        {
-            public Task<bool> Wait(CancellationToken cancellationToken)
-            {
-                Waited = true;
-                return Task.FromResult(true);
-            }
-
-            public bool Waited { get; private set; }
         }
     }
 }

@@ -11,7 +11,7 @@ namespace Dafda.Tests.Attributes
     /// <see cref="Thread.CurrentThread" /> <see cref="CultureInfo.CurrentCulture" /> and
     /// <see cref="CultureInfo.CurrentUICulture" /> with another culture.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class UseCultureAttribute : BeforeAfterTestAttribute
     {
         readonly Lazy<CultureInfo> culture;
@@ -49,12 +49,12 @@ namespace Dafda.Tests.Attributes
         /// <summary>
         /// Gets the culture.
         /// </summary>
-        public CultureInfo Culture { get { return culture.Value; } }
+        public CultureInfo Culture => culture.Value;
 
         /// <summary>
         /// Gets the UI culture.
         /// </summary>
-        public CultureInfo UICulture { get { return uiCulture.Value; } }
+        public CultureInfo UICulture => uiCulture.Value;
 
         /// <summary>
         /// Stores the current <see cref="Thread.CurrentPrincipal" />

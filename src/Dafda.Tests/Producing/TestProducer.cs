@@ -125,10 +125,7 @@ namespace Dafda.Tests.Producing
 
             await sut.Produce(
                 message: new Message { Id = "dummyId" },
-                headers: new Dictionary<string, object>
-                {
-                }
-            );
+                headers: new Dictionary<string, object>());
 
             var expected = @"{
                                 ""messageId"":""1"",

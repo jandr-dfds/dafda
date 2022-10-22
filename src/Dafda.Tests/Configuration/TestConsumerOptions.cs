@@ -97,7 +97,6 @@ namespace Dafda.Tests.Configuration
             sut.WithBootstrapServers("bar");
             sut.WithConfiguration(ConfigurationKeys.EnableAutoCommit, configValue);
             var configuration = sut.Build();
-            ;
 
             Assert.Equal(expected, configuration.EnableAutoCommit);
         }

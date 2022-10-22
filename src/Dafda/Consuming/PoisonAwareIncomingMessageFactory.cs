@@ -24,7 +24,7 @@ namespace Dafda.Consuming
             catch(Exception ex)
             {
                 _logger.LogWarning(ex, "Exception thrown when creating transport level message");
-                return new TransportLevelMessage(new Metadata() { Type = TransportLevelPoisonMessage.Type }, (t) => new TransportLevelPoisonMessage(rawMessage, ex));
+                return new TransportLevelMessage(new Metadata() { Type = TransportLevelPoisonMessage.Type }, _ => new TransportLevelPoisonMessage(rawMessage, ex));
             }
         }
     }
